@@ -1,0 +1,15 @@
+{
+  "name": "IS 800 Beam Design Checker",
+  "short_name": "IS800 Beam",
+  "description": "Steel beam design & load calculation per IS 800:2007 — bending, shear, deflection, compression, biaxial bending checks",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
