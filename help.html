@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help / User Manual — IS 800 Beam Design Tool</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#94a3b8;--gold:#f59e0b;--green:#22c55e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;padding:16px;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-size:18px;color:var(--accent);letter-spacing:1px}
+.back{font-size:11px;color:var(--muted);text-decoration:none;border:1px solid #334155;padding:6px 12px;border-radius:6px}
+.back:hover{border-color:var(--accent);color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:14px}
+h2{font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px}
+h3{font-size:11.5px;color:var(--accent);margin:12px 0 6px}
+p,li{font-size:11.5px;color:#cbd5e1;margin-bottom:6px}
+ol,ul{padding-left:20px;margin-bottom:8px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.toc a{font-size:10px;color:var(--accent);text-decoration:none;border:1px solid #1e3050;padding:5px 10px;border-radius:14px}
+.toc a:hover{background:var(--accent);color:#000}
+.warn{background:#1c1608;border:1px solid var(--gold);border-radius:6px;padding:12px 14px;font-size:10.5px;color:#fcd34d;margin-top:10px}
+.upi-box{background:#052e16;border-radius:6px;padding:10px;color:var(--green);font-weight:bold;font-size:13px;text-align:center;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>❓ HELP / USER MANUAL</h1>
+    <a class="back" href="index.html">← Back to Calculator</a>
+  </div>
+
+  <div class="toc">
+    <a href="#what">1. Ye kya hai</a>
+    <a href="#account">2. Account</a>
+    <a href="#use">3. Use kaise karein</a>
+    <a href="#trial">4. Trial &amp; Payment</a>
+    <a href="#faq">5. FAQ</a>
+    <a href="#install">6. Phone pe install</a>
+  </div>
+
+  <div class="card" id="what">
+    <h2>1. YE APP KYA HAI</h2>
+    <p>Ye IS 800:2007 ke mutabik steel beam/column design check karne ka tool hai — bending, shear, deflection, compression, tension, aur biaxial bending sab ek jagah. Load aur section daalte hi saare checks automatically calculate ho jaate hain, poori formula-by-formula calculation ke saath.</p>
+  </div>
+
+  <div class="card" id="account">
+    <h2>2. ACCOUNT BANANA / LOGIN</h2>
+    <h3>Naya account:</h3>
+    <ol>
+      <li>Login page par "Sign up" link dabayein</li>
+      <li>Email + password (6+ characters) daalein</li>
+      <li>"SIGN UP" dabayein — turant 3 free calculations mil jaate hain</li>
+    </ol>
+    <h3>Existing account:</h3>
+    <ol>
+      <li>Email + password daalein</li>
+      <li>"LOG IN" dabayein</li>
+      <li>Password bhool gaye ho to "Forgot password?" se reset karein</li>
+    </ol>
+  </div>
+
+  <div class="card" id="use">
+    <h2>3. USE KAISE KAREIN</h2>
+    <h3>Section choose karein</h3>
+    <p>Left panel mein Profile Family (ISMB/ISLB/ISWB/ISHB/ISMC/Built-Up), Section Designation, aur Steel Grade select karein.</p>
+    <h3>Member parameters</h3>
+    <p>Member Type, Support Condition, Span (L), aur Deflection Limit set karein.</p>
+    <h3>Loads daalein</h3>
+    <ul>
+      <li><b>GRAVITY tab:</b> Dead Load, Live Load, Wind Load (UDL ya Point Loads)</li>
+      <li><b>HORIZONTAL tab:</b> Side-wise/lateral force (jaise wind seedha bagal se dhakka de)</li>
+      <li><b>AXIAL tab:</b> Axial tension/compression force (column/strut ke liye)</li>
+      <li><b>MOMENT tab:</b> Koi extra applied moment manually</li>
+    </ul>
+    <h3>Results dekhein</h3>
+    <p>Reactions, Max BM/SF, Deflection turant dikhte hain. "IS 800 DESIGN CHECKS" table mein har check ka PASS/FAIL aur UR (Utilization Ratio) dikhta hai — kisi bhi row par click karke poori calculation + remedy dekh sakte hain.</p>
+    <h3>PDF Report / Save Design</h3>
+    <p>"PDF REPORT" button se professional report banti hai. "SAVED DESIGNS" panel se design save/load/export-import kar sakte hain.</p>
+  </div>
+
+  <div class="card" id="trial">
+    <h2>4. FREE TRIAL &amp; PAYMENT</h2>
+    <p>Har account ko <b style="color:var(--gold)">3 FREE calculations</b> milte hain. Uske baad subscribe karna hoga:</p>
+    <ul>
+      <li>Monthly — ₹299/month</li>
+      <li>Yearly — ₹2999/year</li>
+    </ul>
+    <h3>Payment kaise karein (UPI se):</h3>
+    <ol>
+      <li>Paywall screen par diya UPI ID copy karein</li>
+      <li>Apne UPI app (GPay/PhonePe/Paytm) se payment karein</li>
+      <li>Payment screenshot + apna email WhatsApp par bhejein</li>
+      <li>Verification ke baad access activate ho jayega — dobara login karke check karein</li>
+    </ol>
+    <div class="warn">⏳ Access milne mein thoda time (kuch ghante tak) lag sakta hai kyunki payment manually verify hota hai. Turant nahi milega.</div>
+  </div>
+
+  <div class="card" id="faq">
+    <h2>5. FAQ</h2>
+    <h3>Q: Calculation galat lag rahi hai?</h3>
+    <p>Check row par click karke formula-by-formula calculation dekhein. Final construction se pehle hamesha ek licensed structural engineer se verify karayein — ye tool preliminary design assistance ke liye hai.</p>
+    <h3>Q: Payment kar diya, access nahi mila?</h3>
+    <p>Thodi der wait karein. 24 ghante se zyada ho gaye ho to WhatsApp par screenshot + email dobara bhej dein.</p>
+    <div class="warn">⚠️ <b>Disclaimer:</b> Ye tool sirf preliminary design assistance ke liye hai. Final drawings/approvals ke liye qualified structural engineer se verify zaroor karayein.</div>
+  </div>
+
+  <div class="card" id="install">
+    <h2>6. PHONE MEIN APP KI TARAH INSTALL KARNA</h2>
+    <h3>Android (Chrome):</h3>
+    <ol><li>Website kholein</li><li>Top-right menu (⋮) → "Add to Home screen" / "Install app"</li></ol>
+    <h3>iPhone (Safari):</h3>
+    <ol><li>Website kholein</li><li>Share button (□↑) → "Add to Home Screen"</li></ol>
+    <p>Iske baad app icon home screen par aa jayega aur offline bhi kaam karega.</p>
+  </div>
+
+  <div style="text-align:center;font-size:9px;color:#475569;margin-top:20px">
+    Koi aur sawal ho to Admin se WhatsApp par sampark karein.
+  </div>
+</div>
+</body>
+</html>
