@@ -27,6 +27,12 @@ button:hover{background:var(--accent);color:#000}
 .stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 16px}
 .stat .l{font-size:9px;color:var(--muted)}
 .stat .v{font-size:18px;font-weight:bold;color:var(--accent)}
+.filter-btn{background:transparent;border:1px solid #334155;color:#94a3b8;padding:6px 12px;border-radius:20px;font-size:10px;cursor:pointer;font-family:'Courier New',monospace}
+.filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:bold}
+.filter-btn:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+#search-box{padding:6px 10px;border-radius:20px}
+.btn-export{background:var(--green);color:#000;border:none;padding:6px 14px;border-radius:20px;font-size:10px;font-weight:bold;cursor:pointer;font-family:'Courier New',monospace}
+.btn-export:hover{opacity:.85}
 </style>
 </head>
 <body>
@@ -43,6 +49,14 @@ button:hover{background:var(--accent);color:#000}
     <div class="stat"><div class="l">ON TRIAL</div><div class="v" id="st-trial">—</div></div>
     <div class="stat"><div class="l">TRIAL EXPIRED (NOT PAID)</div><div class="v" id="st-expired">—</div></div>
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap" id="filter-bar">
+    <button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>
+    <button class="filter-btn" data-f="active" onclick="setFilter('active')">✅ Paid / Active</button>
+    <button class="filter-btn" data-f="trial" onclick="setFilter('trial')">On Trial</button>
+    <button class="filter-btn" data-f="expired" onclick="setFilter('expired')">⚠ Not Paid (Trial Used)</button>
+    <input type="text" id="search-box" placeholder="Search email..." oninput="renderUsers()" style="margin-left:auto;min-width:180px">
+    <button class="btn-export" onclick="exportToExcel()">⬇ Export to Excel</button>
+  </div>
   <table>
     <thead><tr><th>Email</th><th>Status</th><th>Uses</th><th>Plan</th><th>Expiry</th><th>Actions</th></tr></thead>
     <tbody id="user-rows"></tbody>
@@ -52,6 +66,7 @@ button:hover{background:var(--accent);color:#000}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="firebase-config.js"></script>
 <script>
 auth.onAuthStateChanged(async user=>{
@@ -65,42 +80,91 @@ auth.onAuthStateChanged(async user=>{
   loadUsers();
 });
 
+let ALL_USERS=[];
+let CURRENT_FILTER="all";
+
 async function loadUsers(){
   const snap=await db.collection("users").orderBy("createdAt","desc").get();
-  const rows=document.getElementById("user-rows");
-  rows.innerHTML="";
-  let total=0,active=0,trial=0,expired=0;
   const now=Date.now();
+  ALL_USERS=[];
   snap.forEach(doc=>{
     const d=doc.data(),id=doc.id;
-    total++;
     const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
     const isActive=(d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
     const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
-    let statusBadge;
-    if(d.isAdmin)statusBadge=`<span class="badge b-admin">ADMIN</span>`;
-    else if(isActive){statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;active++;}
-    else if(usedUp){statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;expired++;}
-    else{statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;trial++;}
-    const expiryStr=expiryMs?new Date(expiryMs).toLocaleDateString():"—";
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${d.email}</td>
-      <td>${statusBadge}</td>
-      <td>${d.usageCount||0} / ${FREE_TRIAL_USES}</td>
-      <td>${d.plan||"trial"}</td>
-      <td>${expiryStr}</td>
-      <td>
-        <button onclick="grantAccess('${id}','monthly')">+1mo</button>
-        <button onclick="grantAccess('${id}','yearly')">+1yr</button>
-        <button onclick="revokeAccess('${id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
-      </td>`;
-    rows.appendChild(tr);
+    let statusKey,statusBadge;
+    if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
+    else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
+    else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
+    else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
+    ALL_USERS.push({id,email:d.email,usageCount:d.usageCount||0,plan:d.plan||"trial",
+      expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
+      statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
   });
+  renderUsers();
+}
+
+function setFilter(f){
+  CURRENT_FILTER=f;
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.f===f));
+  renderUsers();
+}
+
+function getFilteredUsers(){
+  const q=(document.getElementById("search-box").value||"").trim().toLowerCase();
+  return ALL_USERS.filter(u=>{
+    if(CURRENT_FILTER==="active"&&u.statusKey!=="active")return false;
+    if(CURRENT_FILTER==="trial"&&u.statusKey!=="trial")return false;
+    if(CURRENT_FILTER==="expired"&&u.statusKey!=="expired")return false;
+    if(q&&!u.email.toLowerCase().includes(q))return false;
+    return true;
+  });
+}
+
+function renderUsers(){
+  const list=getFilteredUsers();
+  const rows=document.getElementById("user-rows");
+  rows.innerHTML=list.map(u=>`
+    <tr>
+      <td>${u.email}</td>
+      <td>${u.statusBadge}</td>
+      <td>${u.usageCount} / ${FREE_TRIAL_USES}</td>
+      <td>${u.plan}</td>
+      <td>${u.expiryStr}</td>
+      <td>
+        <button onclick="grantAccess('${u.id}','monthly')">+1mo</button>
+        <button onclick="grantAccess('${u.id}','yearly')">+1yr</button>
+        <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
+      </td>`).join("");
+  // Stats always reflect the FULL user base, not the current filter/search.
+  const total=ALL_USERS.length;
+  const active=ALL_USERS.filter(u=>u.statusKey==="active").length;
+  const trial=ALL_USERS.filter(u=>u.statusKey==="trial").length;
+  const expired=ALL_USERS.filter(u=>u.statusKey==="expired").length;
   document.getElementById("st-total").textContent=total;
   document.getElementById("st-active").textContent=active;
   document.getElementById("st-trial").textContent=trial;
   document.getElementById("st-expired").textContent=expired;
+}
+
+function exportToExcel(){
+  const list=getFilteredUsers(); // exports whatever filter/search is currently applied
+  if(list.length===0){alert("Export karne ke liye koi user nahi mila (current filter/search ke saath).");return;}
+  const statusLabel={admin:"Admin",active:"Paid / Active",trial:"On Trial",expired:"Trial Used — Not Paid"};
+  const rows=list.map(u=>({
+    "Email":u.email,
+    "Status":statusLabel[u.statusKey]||u.statusKey,
+    "Uses":`${u.usageCount} / ${FREE_TRIAL_USES}`,
+    "Plan":u.plan,
+    "Subscription Expiry":u.expiryStr,
+    "Last Payment ID":u.lastPaymentId
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:28},{wch:22},{wch:10},{wch:12},{wch:18},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Users");
+  const dateTag=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`IS800_Beam_Users_${CURRENT_FILTER}_${dateTag}.xlsx`);
 }
 
 async function grantAccess(uid,plan){
