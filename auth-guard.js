@@ -62,6 +62,7 @@ function injectTopBar(email,usesLeft,isActive,isAdmin){
     :isActive?`<span style="color:#22c55e">SUBSCRIBED</span>`
     :`<span style="color:#f59e0b">${usesLeft} free use${usesLeft===1?"":"s"} left</span>`;
   bar.innerHTML=`👤 ${email} &nbsp;·&nbsp; ${statusTxt} &nbsp;·&nbsp;
+    <a href="help.html" style="color:#38bdf8;text-decoration:none">❓ Help</a> &nbsp;·&nbsp;
     ${isAdmin?`<a href="admin.html" style="color:#38bdf8;text-decoration:none">Admin Panel</a> &nbsp;·&nbsp;`:""}
     <a href="#" id="logoutLink" style="color:#ef4444;text-decoration:none">Logout</a>`;
   document.getElementById("logoutLink").onclick=(e)=>{e.preventDefault();auth.signOut().then(()=>location.href="login.html");};
