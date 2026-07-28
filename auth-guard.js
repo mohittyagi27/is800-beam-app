@@ -19,17 +19,27 @@ function showPaywall(){
   ov(`
     <div style="max-width:380px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:26px;text-align:center">
       <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">🔒 FREE TRIAL KHATAM</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:20px;line-height:1.6">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:18px;line-height:1.6">
         Aapne ${FREE_TRIAL_USES} free calculations use kar liye hain.<br>
         Aage use karne ke liye subscribe karo.
       </div>
-      <button onclick="startPayment('monthly')" style="width:100%;padding:12px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:10px">
-        MONTHLY — ₹${(PLAN_PRICES.monthly.amount/100).toFixed(0)}/month
-      </button>
-      <button onclick="startPayment('yearly')" style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">
-        YEARLY — ₹${(PLAN_PRICES.yearly.amount/100).toFixed(0)}/year
-      </button>
-      <div style="font-size:10px;color:#64748b;margin-top:16px">
+
+      <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;color:#e2e8f0;margin-bottom:10px">
+          <b style="color:#38bdf8">Monthly:</b> ₹299 &nbsp;|&nbsp; <b style="color:#f59e0b">Yearly:</b> ₹2999
+        </div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:8px">Is UPI ID par payment karo:</div>
+        <div style="font-size:15px;color:#22c55e;font-weight:bold;letter-spacing:1px;user-select:all;background:#052e16;border-radius:6px;padding:8px;margin-bottom:10px">
+          ${UPI_ID}
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.6">
+          Payment ke baad apna <b style="color:#94a3b8">email</b> aur <b style="color:#94a3b8">payment screenshot</b> yahan bhejo:<br>
+          <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">WhatsApp: +91 ${SUPPORT_WHATSAPP.slice(2)}</a><br>
+          Access thodi der mein (admin verify karke) activate ho jayega.
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:#64748b">
         <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">Logout</a>
       </div>
     </div>
@@ -88,35 +98,11 @@ async function consumeOneUse(){
   return true;
 }
 
-function startPayment(plan){
-  if(!window.Razorpay){alert("Payment system load ho raha hai, thoda ruk ke try karo.");return;}
-  const p=PLAN_PRICES[plan];
-  const options={
-    key: RAZORPAY_KEY_ID,
-    amount: p.amount,
-    currency: "INR",
-    name: "IS 800 Beam Design Tool",
-    description: `${p.label} Subscription`,
-    prefill: {email: auth.currentUser ? auth.currentUser.email : ""},
-    theme: {color:"#38bdf8"},
-    handler: async function(response){
-      // NOTE (MVP-level): this confirms payment using Razorpay's client-side
-      // success callback only. For production, verify the payment signature
-      // server-side (e.g. a Firebase Cloud Function) before granting access,
-      // since a client-side-only flow can in principle be tampered with.
-      const expiry=new Date(Date.now()+p.days*24*60*60*1000);
-      await db.collection("users").doc(CURRENT_UID).update({
-        plan,
-        subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry),
-        lastPaymentId: response.razorpay_payment_id
-      });
-      await refreshUserDataAndGate();
-      alert("Payment successful! Subscription activate ho gaya.");
-    }
-  };
-  const rz=new Razorpay(options);
-  rz.open();
-}
+// NOTE: automatic in-app checkout (startPayment) was removed — Razorpay now
+// requires an order_id created server-side for standard checkout, which
+// needs a backend (e.g. Firebase Cloud Functions on the Blaze plan). Until
+// that's set up, the paywall links out to Razorpay Payment Links instead,
+// and the admin grants access manually from admin.html after payment.
 
 // ── Boot sequence ──
 showLoading("CHECKING LOGIN...");
