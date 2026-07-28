@@ -15,7 +15,13 @@ const firebaseConfig = {
 // ── App-level settings you can tune ──
 const ADMIN_EMAIL = "mohittyagi3032mt@gmail.com";
 const FREE_TRIAL_USES = 3;
-const RAZORPAY_KEY_ID = "rzp_test_TIopl8H5MLjfrc"; // TEST key — switch to rzp_live_... once Razorpay approves the account
+const RAZORPAY_KEY_ID = "rzp_test_TIopl8H5MLjfrc"; // kept for reference; not used by Payment Links flow
+const PAYMENT_LINKS = {
+  monthly: "https://rzp.io/rzp/vfoUcn75",
+  yearly: "https://rzp.io/rzp/ChJUd4Sm"
+};
+const UPI_ID = "8979463032@ptsbi";
+const SUPPORT_WHATSAPP = "919354115166"; // country code + number, no + or spaces (used for wa.me link)
 const PLAN_PRICES = {
   monthly: { amount: 29900, label: "Monthly", days: 30 },   // amount in paise (₹299)
   yearly:  { amount: 299900, label: "Yearly", days: 365 }   // amount in paise (₹2999)
