@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>IS 800 Steel Member Design Tool</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<!-- iOS install support -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IS800 Beam">
+<style>
+:root {
+  --bg:#0b1120; --panel:#111827; --panel2:#1a2235; --border:#1e3050;
+  --accent:#38bdf8; --gold:#f59e0b; --green:#22c55e; --red:#ef4444;
+  --purple:#a78bfa; --orange:#fb923c; --pink:#f472b6;
+  --text:#e2e8f0; --muted:#64748b; --dim:#334155;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;padding:12px}
+h1{text-align:center;font-size:20px;letter-spacing:4px;color:var(--accent);padding:10px 0 4px;border-bottom:1px solid var(--border)}
+.subtitle{text-align:center;font-size:10px;color:var(--muted);margin:4px 0 12px;letter-spacing:2px}
+
+.top-layout{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.col-left{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
+.col-mid{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
+.col-right{flex:1;min-width:320px;display:flex;flex-direction:column;gap:8px}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px}
+.stitle{font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:bold;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border)}
+
+label{font-size:10px;color:#94a3b8;display:block;margin-bottom:3px}
+select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:1px solid var(--dim);color:var(--text);padding:5px 8px;border-radius:4px;font-family:'Courier New',monospace;font-size:11px;outline:none;transition:border-color .2s}
+select:focus,input:focus{border-color:var(--accent)}
+.form-row{margin-bottom:8px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+.tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.tab{padding:5px 10px;border:1px solid var(--dim);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-family:'Courier New',monospace;transition:all .2s}
+.tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:bold}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.sl-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.sl-label{font-size:10px;color:#94a3b8}
+.sl-val{font-size:12px;font-weight:bold}
+input[type=range]{width:100%;height:3px;appearance:none;-webkit-appearance:none;border-radius:2px;cursor:pointer;outline:none;margin-bottom:10px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;cursor:pointer;border:2px solid var(--bg)}
+
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--dim);margin-bottom:6px;cursor:pointer;font-size:10px;color:#94a3b8}
+.tog-sw{width:30px;height:16px;border-radius:8px;position:relative;transition:background .2s;flex-shrink:0}
+.tog-kn{width:12px;height:12px;background:white;border-radius:50%;position:absolute;top:2px;transition:left .2s}
+
+.load-block{background:var(--bg);border-radius:6px;padding:8px;margin-bottom:8px;border:1px solid #1e3050}
+.load-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.load-title{font-size:10px;font-weight:bold}
+.btn-x{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:13px}
+
+.btn-add{width:100%;padding:6px;background:transparent;border:1px dashed #334155;border-radius:4px;color:#475569;cursor:pointer;font-size:10px;font-family:'Courier New',monospace}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+.btn-calc{width:100%;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px;transition:opacity .2s;margin-top:4px}
+.btn-calc:hover{opacity:.85}
+.btn-tog2{padding:5px 10px;border-radius:4px;font-size:9px;cursor:pointer;font-family:'Courier New',monospace;transition:all .2s;border:1px solid var(--dim)}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{flex:1;min-width:72px;background:var(--panel);border-radius:6px;padding:6px 8px;text-align:center;border:1px solid var(--dim)}
+.chip .cl{font-size:8px;color:var(--muted);margin-bottom:2px}
+.chip .cv{font-size:13px;font-weight:bold}
+
+.check-table{width:100%;border-collapse:collapse;font-size:10px}
+.check-table th{color:var(--muted);padding:4px 6px;text-align:left;border-bottom:1px solid var(--border);font-weight:normal;font-size:9px}
+.check-table td{padding:4px 6px;border-bottom:1px solid #111827}
+.check-table tr:last-child td{border-bottom:none}
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.warn{color:var(--gold);font-weight:bold}
+.na{color:var(--muted)}
+
+.urbar-wrap{margin:3px 0}
+.urbar{height:6px;background:#1e293b;border-radius:3px;overflow:hidden}
+.urbar-fill{height:100%;border-radius:3px;transition:width .4s}
+
+svg{display:block;width:100%;overflow:visible}
+.diag-lbl{font-size:9px;color:var(--muted);text-align:center;margin-bottom:3px}
+
+.sec-preview{display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--border);margin-bottom:8px}
+.sec-preview-top{display:flex;align-items:center;gap:10px}
+.sec-preview-top svg{flex-shrink:0;width:70px;height:88px}
+.sec-title-badge{font-size:11px;font-weight:bold;color:var(--accent);letter-spacing:1px;word-break:break-all}
+.sec-props{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;width:100%;border-top:1px solid var(--border);padding-top:6px}
+.sp{font-size:10px;color:#94a3b8;white-space:nowrap}
+.sp b{color:var(--text)}
+
+.status-banner{padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px}
+.check-scroll{max-height:380px;overflow-y:auto}
+.check-scroll::-webkit-scrollbar{width:4px}
+.check-scroll::-webkit-scrollbar-track{background:#0b1120}
+.check-scroll::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
+
+@media(max-width:700px){
+  .col-left,.col-mid{flex:0 0 100%}
+  .top-layout{flex-direction:column}
+}@media print{
+  body *{visibility:hidden}
+  #print-report, #print-report *{visibility:visible}
+  #print-report{display:block !important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;padding:20px}
+  #print-report h2{font-size:18px;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:10px}
+  #print-report h3{font-size:13px;color:#333;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+  #print-report table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11px}
+  #print-report table td,#print-report table th{border:1px solid #999;padding:4px 6px;text-align:left}
+  #print-report th{background:#eee}
+  #print-report .rpt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:11px;margin-bottom:8px}
+  #print-report svg{background:#fff;border:1px solid #ccc;margin:6px 0;width:100%;height:auto}
+  #print-report .rpt-pass{color:#0a7a0a;font-weight:bold}
+  #print-report .rpt-warn{color:#b8860b;font-weight:bold}
+  #print-report .rpt-fail{color:#c0392b;font-weight:bold}
+  #print-report .rpt-foot{font-size:9px;color:#777;margin-top:16px;border-top:1px solid #ccc;padding-top:6px}
+}
+</style>
+</head>
+<body>
+<div id="auth-overlay" style="position:fixed;inset:0;background:#0b1120;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;font-family:'Courier New',monospace"></div>
+
+<h1>⚙ IS 800 STEEL MEMBER DESIGN</h1>
+<div class="subtitle">IS 800:2007 · IS 875 · LSM · BEAM + COLUMN · LIVE VISUALIZER</div>
+
+<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+  <button onclick="generatePDFReport()" style="background:#0b1120;border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:6px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:1px;cursor:pointer">🖨 PDF REPORT</button>
+</div>
+
+<div id="saved-designs-panel" style="max-width:900px;margin:0 auto 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+  <div class="stitle" style="margin-bottom:8px">💾 SAVED DESIGNS — stored in this browser</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <input type="text" id="designNameInput" placeholder="Design name e.g. Beam-B1" style="flex:1;min-width:160px">
+    <button onclick="saveDesignNamed()" style="background:#0b1120;border:1px solid var(--accent);color:var(--accent);padding:6px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap">💾 SAVE HERE</button>
+    <button onclick="exportDesignFile()" style="background:transparent;border:1px solid var(--muted);color:var(--muted);padding:6px 10px;border-radius:5px;font-family:'Courier New',monospace;font-size:9px;cursor:pointer;white-space:nowrap">⬇ export .json</button>
+    <button onclick="document.getElementById('loadFileInput').click()" style="background:transparent;border:1px solid var(--muted);color:var(--muted);padding:6px 10px;border-radius:5px;font-family:'Courier New',monospace;font-size:9px;cursor:pointer;white-space:nowrap">⬆ import .json</button>
+    <input type="file" id="loadFileInput" accept=".json" style="display:none" onchange="loadDesign(event)">
+  </div>
+  <div id="saved-designs-list" style="display:flex;flex-direction:column;gap:6px"></div>
+</div>
+
+<div id="print-report" style="display:none"></div>
+
+<div class="top-layout">
+
+<!-- ═══ LEFT COLUMN ═══ -->
+<div class="col-left">
+  <div class="card">
+    <div class="stitle">SECTION TYPE</div>
+    <div class="form-row">
+      <label>Profile Family</label>
+      <select id="secFamily" onchange="onFamilyChange()">
+        <option value="ISMB">ISMB — Medium Weight Beam</option>
+        <option value="ISLB">ISLB — Light Weight Beam</option>
+        <option value="ISWB">ISWB — Wide Flange Beam</option>
+        <option value="ISHB">ISHB — Column Section</option>
+        <option value="ISMC">ISMC — Channel</option>
+        <option value="BUILDUP">Built-Up I Section</option>
+      </select>
+    </div>
+    <div id="std-sec-row" class="form-row">
+      <label>Section Designation</label>
+      <select id="secDesig" onchange="onSectionChange()"></select>
+    </div>
+    <div id="buildup-rows" style="display:none">
+      <div class="stitle">BUILT-UP PLATE SIZES</div>
+      <div class="form-2col">
+        <div class="form-row"><label>Top Flange Width bf1 (mm)</label><input type="number" id="bu_bf1" value="250" oninput="onBUChange()"></div>
+        <div class="form-row"><label>Top Flange Thick tf1 (mm)</label><input type="number" id="bu_tf1" value="16" oninput="onBUChange()"></div>
+      </div>
+      <div class="form-row"><label>Web Depth (clear) dw (mm)</label><input type="number" id="bu_dw" value="500" oninput="onBUChange()"></div>
+      <div class="form-row"><label>Web Thickness tw (mm)</label><input type="number" id="bu_tw" value="10" oninput="onBUChange()"></div>
+      <div class="form-2col">
+        <div class="form-row"><label>Bot Flange Width bf2 (mm)</label><input type="number" id="bu_bf2" value="250" oninput="onBUChange()"></div>
+        <div class="form-row"><label>Bot Flange Thick tf2 (mm)</label><input type="number" id="bu_tf2" value="16" oninput="onBUChange()"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Steel Grade</label>
+      <select id="steelGrade" onchange="onSectionChange()">
+        <option value="250">E250 (Fe410) — fy=250 MPa</option>
+        <option value="300">E300 (Fe440) — fy=300 MPa</option>
+        <option value="350">E350 (Fe490) — fy=350 MPa</option>
+        <option value="410">E410 — fy=410 MPa</option>
+      </select>
+    </div>
+    <div id="sec-preview-box" class="sec-preview">
+      <div class="sec-preview-top">
+        <svg id="svg-cross" viewBox="0 0 80 100"></svg>
+        <div id="sec-name-badge" class="sec-title-badge">—</div>
+      </div>
+      <div class="sec-props" id="sec-props-list"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">MEMBER PARAMETERS</div>
+    <div class="form-row">
+      <label>Member Type</label>
+      <select id="memberType" onchange="updateAll()">
+        <option value="beam">Beam (Bending dominant)</option>
+        <option value="column">Column (Compression dominant)</option>
+        <option value="strut">Strut / Brace (Tension or Compression)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Support / Boundary Condition</label>
+      <select id="supCond" onchange="updateAll()">
+        <option value="SS">Simply Supported</option>
+        <option value="CANT">Cantilever</option>
+        <option value="FIXED">Fixed-Fixed</option>
+        <option value="PROPPED">Propped Cantilever</option>
+        <option value="OVERHANG">Overhanging Beam</option>
+      </select>
+    </div>
+    <div id="overhang-row" style="display:none" class="form-row">
+      <label>Overhang Length c (m)</label>
+      <input type="number" id="inp-c" value="1.5" step="0.1" min="0.1" oninput="updateAll()">
+    </div>
+    <div class="sl-row"><span class="sl-label">Span L</span><span class="sl-val" id="val-L" style="color:var(--accent)">6.0 m</span></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="range" id="sl-L" min="1" max="24" step="0.5" value="6" oninput="document.getElementById('num-L').value=this.value;updateAll()" style="flex:1;background:linear-gradient(to right,#38bdf8 0%,#38bdf8 21%,#334155 21%,#334155 100%)">
+      <input type="number" id="num-L" min="0.1" step="0.1" value="6" style="width:70px" oninput="extendRange('sl-L',this.value);updateAll()">
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>KyL (m) — minor axis Y</label><input type="number" id="inp-KyL" value="6" step="0.5" oninput="updateAll()"></div>
+      <div class="form-row"><label>KzL (m) — major axis Z</label><input type="number" id="inp-KzL" value="6" step="0.5" oninput="updateAll()"></div>
+    </div>
+    <div class="form-row"><label>LLT (m) — LTB length</label><input type="number" id="inp-LLT" value="6" step="0.5" oninput="updateAll()"></div>
+    <div class="form-row">
+      <label>Deflection Limit</label>
+      <select id="deflLimit" onchange="updateAll()">
+        <option value="300">L/300 — General beam (LL only)</option>
+        <option value="360">L/360 — Brittle finish / plaster</option>
+        <option value="250">L/250 — Floor beams (total)</option>
+        <option value="150">L/150 — Cantilever / purlins</option>
+        <option value="600">L/600 — Crane runway girder</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MID COLUMN ═══ -->
+<div class="col-mid">
+  <div class="card">
+    <div class="stitle">LOAD TYPES</div>
+    <div class="tabs" id="load-tabs">
+      <div class="tab active" onclick="showLoadTab('gravity')">GRAVITY</div>
+      <div class="tab" onclick="showLoadTab('horiz')">HORIZONTAL</div>
+      <div class="tab" onclick="showLoadTab('axial')">AXIAL</div>
+      <div class="tab" onclick="showLoadTab('moment')">MOMENT</div>
+    </div>
+
+    <div class="tab-panel active" id="lt-gravity">
+      <div class="tog-row" onclick="toggleLoad('DL')">
+        <span>Dead Load (DL) — UDL</span>
+        <div class="tog-sw" id="sw-DL" style="background:var(--dim)"><div class="tog-kn" id="kn-DL" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-DL" style="display:none">
+        <div class="sl-row"><span class="sl-label">wDL</span><span class="sl-val" id="val-wDL" style="color:#94a3b8">5 kN/m</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wDL" min="0.5" max="60" step="0.5" value="5" oninput="document.getElementById('num-wDL').value=this.value;updateAll()" style="flex:1;background:linear-gradient(to right,#94a3b8 0%,#94a3b8 8%,#334155 8%,#334155 100%)">
+          <input type="number" id="num-wDL" min="0" step="0.1" value="5" style="width:64px" oninput="extendRange('sl-wDL',this.value);document.getElementById('sl-wDL').value=this.value;updateAll()">
+        </div>
+      </div>
+      <div class="tog-row" onclick="toggleLoad('LL')">
+        <span>Live Load (LL) — UDL</span>
+        <div class="tog-sw" id="sw-LL" style="background:var(--dim)"><div class="tog-kn" id="kn-LL" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-LL" style="display:none">
+        <div class="sl-row"><span class="sl-label">wLL</span><span class="sl-val" id="val-wLL" style="color:#f59e0b">10 kN/m</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wLL" min="0.5" max="80" step="0.5" value="10" oninput="document.getElementById('num-wLL').value=this.value;updateAll()" style="flex:1;background:linear-gradient(to right,#f59e0b 0%,#f59e0b 12%,#334155 12%,#334155 100%)">
+          <input type="number" id="num-wLL" min="0" step="0.1" value="10" style="width:64px" oninput="extendRange('sl-wLL',this.value);document.getElementById('sl-wLL').value=this.value;updateAll()">
+        </div>
+      </div>
+      <div class="tog-row" onclick="toggleLoad('WL')">
+        <span>Wind Load (WL) — UDL</span>
+        <div class="tog-sw" id="sw-WL" style="background:var(--dim)"><div class="tog-kn" id="kn-WL" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-WL" style="display:none">
+        <div class="sl-row"><span class="sl-label">wWL</span><span class="sl-val" id="val-wWL" style="color:#38bdf8">3 kN/m</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wWL" min="0.5" max="30" step="0.5" value="3" oninput="document.getElementById('num-wWL').value=this.value;updateAll()" style="flex:1;background:linear-gradient(to right,#38bdf8 0%,#38bdf8 8%,#334155 8%,#334155 100%)">
+          <input type="number" id="num-wWL" min="0" step="0.1" value="3" style="width:64px" oninput="extendRange('sl-wWL',this.value);document.getElementById('sl-wWL').value=this.value;updateAll()">
+        </div>
+      </div>
+      <div id="point-loads">
+        <div class="stitle">POINT LOADS</div>
+        <div id="pl-list"></div>
+        <button class="btn-add" onclick="addPL()" id="btn-add-pl">+ Add Point Load</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="lt-horiz">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+        Force acting sideways (perpendicular to beam axis, e.g. wind pushing on the flange, or a
+        lateral point load). This causes bending about the <b>minor (y) axis</b> and is combined
+        with the major-axis (gravity) moment in the Biaxial Bending check — IS 800 Cl. 9.3.1.1.
+      </div>
+      <div class="tog-row" onclick="toggleLoad('HZ')">
+        <span>Horizontal Load (HZ) — UDL</span>
+        <div class="tog-sw" id="sw-HZ" style="background:var(--dim)"><div class="tog-kn" id="kn-HZ" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-HZ" style="display:none">
+        <div class="sl-row"><span class="sl-label">wHZ</span><span class="sl-val" id="val-wHZ" style="color:#f472b6">2 kN/m</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wHZ" min="0.5" max="30" step="0.5" value="2" oninput="document.getElementById('num-wHZ').value=this.value;updateAll()" style="flex:1;background:linear-gradient(to right,#f472b6 0%,#f472b6 7%,#334155 7%,#334155 100%)">
+          <input type="number" id="num-wHZ" min="0" step="0.1" value="2" style="width:64px" oninput="extendRange('sl-wHZ',this.value);document.getElementById('sl-wHZ').value=this.value;updateAll()">
+        </div>
+        <div class="form-row" style="margin-top:6px"><label>γHZ (load factor)</label><input type="number" id="lf-HZ" value="1.5" step="0.05" oninput="updateAll()"></div>
+      </div>
+      <div id="point-loads-h">
+        <div class="stitle">HORIZONTAL POINT LOADS</div>
+        <div id="pl-list-h"></div>
+        <button class="btn-add" onclick="addPLH()" id="btn-add-plh">+ Add Horizontal Point Load</button>
+      </div>
+      <div style="font-size:9px;color:var(--accent);margin-top:8px" id="hz-summary">My from horizontal loads: 0.0 kN·m</div>
+    </div>
+
+    <div class="tab-panel" id="lt-axial">
+      <div class="form-row"><label>Axial Tensile Force Ft (kN)</label><input type="number" id="inp-Ft" value="0" step="10" oninput="updateAll()"></div>
+      <div class="form-row"><label>Axial Compressive Force Fc (kN)</label><input type="number" id="inp-Fc" value="0" step="10" oninput="updateAll()"></div>
+      <div class="form-row">
+        <label>Buckling Curve (IS 800 Table 7)</label>
+        <select id="buckCurve" onchange="updateAll()">
+          <option value="0.21">Curve a — α=0.21</option>
+          <option value="0.34" selected>Curve b — α=0.34</option>
+          <option value="0.49">Curve c — α=0.49</option>
+          <option value="0.76">Curve d — α=0.76</option>
+        </select>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px;line-height:1.6">
+        Curve a: Hot-rolled I-sec (h/b>1.2, tf≤40) major axis<br>
+        Curve b: Hot-rolled I-sec minor axis; H-sec (h/b≤1.2)<br>
+        Curve c: Welded I-sec; channels; angles<br>
+        Curve d: Heavy plates, solid sections
+      </div>
+    </div>
+
+    <div class="tab-panel" id="lt-moment">
+      <div class="form-row"><label>Applied Mx (kN·m) — Additional Major Axis Moment</label><input type="number" id="inp-Mx" value="0" step="5" oninput="updateAll()"></div>
+      <div class="form-row"><label>Applied My (kN·m) — extra minor-axis moment (manual)</label><input type="number" id="inp-My" value="0" step="5" oninput="updateAll()"></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px;line-height:1.5">
+        IS 800 Cl. 9.3.1.1/9.3.1.2 (Plastic/Compact I-sections):<br>
+        (Mx,total/Mndz)^α1 + (My,total/Mndy)^α2 ≤ 1.0<br>
+        α1=2, α2=max(5n,1), n=N/Nd. Mndz,Mndy reduced for axial force.<br>
+        Mx,total = Mu (gravity loads) + Mx (applied here).<br>
+        My,total = My,horiz (auto, from HORIZONTAL tab loads) + My (applied here).
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">LOAD FACTORS (IS 800 Cl. 5)</div>
+    <div class="form-3col">
+      <div class="form-row"><label>γDL</label><input type="number" id="lf-DL" value="1.5" step="0.05" oninput="updateAll()"></div>
+      <div class="form-row"><label>γLL</label><input type="number" id="lf-LL" value="1.5" step="0.05" oninput="updateAll()"></div>
+      <div class="form-row"><label>γWL</label><input type="number" id="lf-WL" value="1.5" step="0.05" oninput="updateAll()"></div>
+    </div>
+    <div style="font-size:9px;color:var(--muted)">Comb 1: 1.5(DL+LL) | Comb 2: 1.2(DL+LL+WL) | Comb 3: 0.9DL+1.5WL</div>
+    <button class="btn-calc" onclick="updateAll()">▶ CALCULATE ALL CHECKS</button>
+  </div>
+</div>
+
+<!-- ═══ RIGHT COLUMN ═══ -->
+<div class="col-right">
+  <div class="chips">
+    <div class="chip" style="border-color:#22c55444"><div class="cl">RA (kN)</div><div class="cv" style="color:var(--green)" id="cr-RA">—</div></div>
+    <div class="chip" style="border-color:#22c55444"><div class="cl">RB (kN)</div><div class="cv" style="color:var(--green)" id="cr-RB">—</div></div>
+    <div class="chip" style="border-color:#818cf844"><div class="cl">Max BM (kN·m)</div><div class="cv" style="color:var(--purple)" id="cr-BM">—</div></div>
+    <div class="chip" style="border-color:#34d39944"><div class="cl">Max SF (kN)</div><div class="cv" style="color:#34d399" id="cr-SF">—</div></div>
+    <div class="chip" style="border-color:#fb923c44"><div class="cl">Deflection (mm)</div><div class="cv" style="color:var(--orange)" id="cr-DEF">—</div></div>
+  </div>
+
+  <div class="card" style="padding:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span class="diag-lbl" style="margin:0">BEAM DIAGRAM</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn-tog2" id="btog-bmd" onclick="toggleBMD()" style="border-color:#818cf8;background:#1e1b4b;color:#a5b4fc">BMD ✓</button>
+        <button class="btn-tog2" id="btog-sfd" onclick="toggleSFD()" style="border-color:#34d399;background:#052e16;color:#6ee7b7">SFD ✓</button>
+        <button class="btn-tog2" id="btog-def" onclick="toggleDEF()" style="border-color:#fb923c;background:#1c1008;color:#fb923c">DEF ✓</button>
+      </div>
+    </div>
+    <svg id="svg-beam" viewBox="0 0 720 185" height="185"></svg>
+  </div>
+
+  <div class="card" id="bmd-card" style="padding:10px">
+    <div class="diag-lbl" style="color:#a5b4fc">BENDING MOMENT DIAGRAM (kN·m)</div>
+    <svg id="svg-bmd" viewBox="0 0 720 110" height="110"></svg>
+  </div>
+
+  <div class="card" id="sfd-card" style="padding:10px">
+    <div class="diag-lbl" style="color:#6ee7b7">SHEAR FORCE DIAGRAM (kN)</div>
+    <svg id="svg-sfd" viewBox="0 0 720 110" height="110"></svg>
+  </div>
+
+  <div class="card" id="def-card" style="padding:10px">
+    <div class="diag-lbl" style="color:var(--orange)">DEFLECTION DIAGRAM (mm) — Elastic Curve (Service Load)</div>
+    <svg id="svg-def" viewBox="0 0 720 90" height="90"></svg>
+  </div>
+
+  <div id="status-banner" class="status-banner" style="background:#111827;border:1px solid var(--border)">⏳ ENTER LOADS & CALCULATE</div>
+
+  <div class="card">
+    <div class="stitle">IS 800 DESIGN CHECKS</div>
+    <div class="check-scroll">
+      <table class="check-table">
+        <thead><tr><th>CHECK (click row for calc)</th><th>CLAUSE</th><th>DEMAND</th><th>CAPACITY</th><th>UR</th><th>STATUS</th></tr></thead>
+        <tbody id="check-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">SECTION CLASSIFICATION & KEY VALUES</div>
+    <div id="sec-class-out" style="font-size:10px;color:#94a3b8;line-height:1.8"></div>
+  </div>
+</div>
+</div>
+
+<script>
+const SECTIONS = {
+  ISMB:[
+    ["ISMB 100",100,75,7.2,4.0,7.5,1450,257,9.2,51.4,2.45,58.6,3.79,13.3,2.52,6.4,0.95,11.4],
+    ["ISMB 125",125,75,7.6,4.4,8,1720,449,10.8,71.8,2.88,82.1,4.47,16.2,2.51,13.1,1.3,13.5],
+    ["ISMB 150",150,80,7.6,4.8,8,1936,726,9.2,96.9,2.30,111,3.57,19.4,2.18,17.5,1.36,15.2],
+    ["ISMB 175",175,90,7.4,5.5,8,2444,1262,14.3,144,3.18,163,4.92,22.7,2.42,43.6,1.91,19.2],
+    ["ISMB 200",200,100,10.8,5.7,11,3234,2235,150,223,30.0,258,46.8,26.3,6.82,107,8.25,25.4],
+    ["ISMB 225",225,110,11.8,6.5,12,3876,3441,218,306,39.7,354,61.1,29.8,7.50,215,12.1,30.4],
+    ["ISMB 250",250,125,12.5,6.9,13,4755,5131,335,411,53.6,477,82.8,32.8,8.39,394,18.6,37.3],
+    ["ISMB 300",300,140,13.1,7.7,14,5626,8603,423,574,60.4,667,93.4,39.1,8.67,803,23.6,44.2],
+    ["ISMB 350",350,140,14.2,8.1,14,6312,13630,538,779,76.8,906,119,46.5,9.24,1456,31.7,49.5],
+    ["ISMB 400",400,140,16.0,8.9,14,7846,20458,622,1022,88.9,1191,138,51.1,8.90,2440,44.7,61.6],
+    ["ISMB 450",450,150,17.4,9.4,15,9227,30390,834,1351,111,1575,173,57.4,9.50,4271,62.0,72.4],
+    ["ISMB 500",500,180,17.2,10.2,17,11090,45218,1370,1809,152,2091,236,63.8,11.1,8120,79.6,87.1],
+    ["ISMB 550",550,190,19.3,11.2,18,13209,64893,1843,2359,194,2733,300,70.1,11.8,13916,110,103.7],
+    ["ISMB 600",600,210,20.8,12.0,20,15600,91813,2650,3060,253,3546,392,76.7,13.0,23700,157,122.6]
+  ],
+  ISLB:[
+    ["ISLB 100",100,50,6.4,4.0,7,851,168,6.0,33.6,1.2,40,1.86,14.1,2.66,1.86,0.68,6.67],
+    ["ISLB 125",125,65,6.5,4.4,7.5,1176,376,14.1,60.2,4.33,70,6.7,17.9,3.47,8.14,1.04,9.23],
+    ["ISLB 150",150,80,6.8,4.8,8,1445,688,22.0,91.7,5.5,107,8.52,21.8,3.90,21.8,1.46,11.4],
+    ["ISLB 175",175,90,7.4,5.1,9,1718,1214,35.3,138,7.84,161,12.2,26.6,4.53,55.9,1.95,13.5],
+    ["ISLB 200",200,100,7.3,5.4,9,2040,2037,57.1,203,11.4,237,17.7,31.6,5.29,132,2.54,16.0],
+    ["ISLB 225",225,100,8.6,5.8,10,2424,3492,66.9,310,13.4,364,20.9,37.9,5.25,255,4.12,19.0],
+    ["ISLB 250",250,125,8.2,6.1,10,3030,5384,135,430,21.6,504,33.5,42.2,6.68,474,4.81,23.8],
+    ["ISLB 300",300,150,9.4,6.7,11,4067,9874,296,658,39.5,777,61.4,49.3,8.53,1400,8.64,31.9],
+    ["ISLB 350",350,165,11.4,7.4,12,5140,19158,514,1095,62.3,1286,97,61.1,10.0,3700,14.6,40.4],
+    ["ISLB 400",400,165,12.5,8.0,13,5883,29380,586,1469,71.0,1722,111,70.7,9.98,6800,17.7,46.2],
+    ["ISLB 450",450,170,13.4,8.6,14,6975,47154,708,2096,83.3,2458,130,82.3,10.1,12900,22.8,54.8],
+    ["ISLB 500",500,180,14.1,9.2,15,8160,71175,918,2847,102,3345,159,93.5,10.6,23800,30.3,64.1],
+    ["ISLB 550",550,190,15.0,9.9,15,9504,101730,1144,3699,120,4350,188,103,11.0,41100,39.1,74.6],
+    ["ISLB 600",600,210,15.5,10.5,15,11170,141500,1630,4717,155,5550,242,112,12.1,73000,50.2,87.7]
+  ],
+  ISWB:[
+    ["ISWB 150",150,100,9.9,5.4,10,2156,1300,96.5,173,19.3,201,30,24.6,6.69,46.4,4.27,16.9],
+    ["ISWB 175",175,125,10.0,5.8,10,2895,2509,184,287,29.4,334,46,29.4,7.97,130,6.71,22.7],
+    ["ISWB 200",200,140,10.0,6.1,11,3565,4386,292,438,41.7,510,65,35.1,9.05,283,9.15,28.0],
+    ["ISWB 225",225,150,10.7,6.4,12,4261,7174,421,638,56.1,742,88,41.0,9.94,556,13.1,33.5],
+    ["ISWB 250",250,200,9.0,6.7,12,5375,10490,1000,839,100,975,155,44.2,13.6,752,13.5,42.2],
+    ["ISWB 300",300,200,10.0,7.4,12,7236,22820,1268,1521,127,1768,197,56.2,13.2,2390,23.3,56.9],
+    ["ISWB 350",350,200,11.4,8.0,13,9027,42580,1551,2433,155,2829,241,68.7,13.1,5720,35.9,70.9],
+    ["ISWB 400",400,200,13.0,8.6,14,10974,71436,1812,3572,181,4145,282,80.7,12.9,12400,53.4,86.2],
+    ["ISWB 450",450,200,15.0,9.2,15,13060,109838,2040,4882,204,5672,318,91.7,12.5,23200,82.0,102.6],
+    ["ISWB 500",500,250,14.7,9.9,15,16090,158290,3440,6332,275,7340,428,99.3,14.6,42700,98.6,126.4],
+    ["ISWB 550",550,250,17.6,11.2,15,19660,255800,4130,9302,330,10800,515,114,14.5,86600,155,154.4],
+    ["ISWB 600",600,250,21.3,11.8,15,23490,377840,4920,12595,394,14600,617,126,14.5,160000,239,184.4]
+  ],
+  ISHB:[
+    ["ISHB 100",100,100,7.0,5.0,8,2160,284,94.5,56.8,18.9,66,29.2,11.5,6.62,22.4,2.59,17.0],
+    ["ISHB 150",150,150,9.0,5.4,10,3788,1376,506,183,67.5,212,104,19.1,11.6,178,9.15,29.7],
+    ["ISHB 200",200,200,9.0,6.1,11,5336,3688,1350,369,135,425,208,26.3,15.9,699,15.3,41.9],
+    ["ISHB 225",225,225,9.1,6.5,12,6408,5984,2238,532,199,614,307,30.6,18.7,1440,20.4,50.3],
+    ["ISHB 250",250,250,9.7,6.9,13,8070,10042,3850,803,308,925,474,35.3,21.9,3600,29.1,63.4],
+    ["ISHB 300",300,250,10.6,7.6,13,9831,18374,4427,1225,354,1411,546,43.2,21.2,7840,42.7,77.1],
+    ["ISHB 350",350,250,11.6,8.3,13,11586,31114,5028,1778,402,2051,622,51.8,20.8,16600,61.1,91.0],
+    ["ISHB 400",400,250,12.7,8.9,14,13645,49451,5629,2473,450,2852,698,60.2,20.3,31800,83.0,107],
+    ["ISHB 450",450,250,13.7,9.8,14,16340,78990,6261,3511,501,4052,778,69.5,19.6,65500,113,128.3]
+  ],
+  ISMC:[
+    ["ISMC 75",75,40,7.3,4.4,8,848,71.8,11.2,19.1,3.59,24.4,6.1,9.21,3.64,1.25,1.10,6.67],
+    ["ISMC 100",100,50,7.5,4.7,9,1141,187,26.7,37.3,6.44,47.2,10.7,12.8,4.84,4.26,1.68,8.96],
+    ["ISMC 125",125,65,8.1,5.0,9,1604,417,75.2,66.8,14.6,84.0,23.5,16.1,6.85,17.2,3.25,12.6],
+    ["ISMC 150",150,75,9.0,5.4,10,2027,788,103,105,18.2,133,29.3,19.7,7.13,38.2,4.59,15.9],
+    ["ISMC 175",175,75,10.2,5.7,10,2618,1508,128,172,22.2,219,35.6,24.0,6.99,90.5,7.30,20.5],
+    ["ISMC 200",200,75,11.4,6.1,10,3211,2687,148,269,24.7,344,39.1,28.9,6.79,197,10.9,25.2],
+    ["ISMC 225",225,80,12.4,6.4,11,3811,4356,188,387,29.8,497,47.5,33.8,7.02,391,14.9,29.9],
+    ["ISMC 250",250,80,14.1,7.1,12,4618,6605,230,528,33.1,679,52.5,37.8,7.06,717,23.7,36.3],
+    ["ISMC 300",300,90,13.6,7.8,12,5696,12532,325,835,43.7,1079,69.4,46.9,7.56,1939,27.9,44.7],
+    ["ISMC 350",350,100,13.5,8.1,13,6660,22148,430,1265,53.1,1634,85.1,57.7,8.03,4220,35.0,52.3],
+    ["ISMC 400",400,100,15.3,8.6,14,7962,35163,499,1759,59.0,2283,94.0,66.4,7.93,8690,51.2,62.5]
+  ]
+};
+
+function extendRange(sliderId,val){
+  const el=document.getElementById(sliderId);
+  val=+val;
+  if(isNaN(val))return;
+  if(val>+el.max)el.max=val;
+  if(val<+el.min)el.min=val;
+  el.value=val;
+}
+let L=6, cOver=1.5;
+let showBMD=true, showSFD=true, showDEF=true;
+let activeLoads={DL:false,LL:false,WL:false,HZ:false};
+let pointLoads=[];
+let pointLoadsH=[];
+let currentSec=null, isBuiltUp=false;
+const PLC=["#ef4444","#f97316","#a855f7","#22d3ee","#84cc16"];
+const PAD=55, W=720;
+
+function onFamilyChange(){
+  const fam=document.getElementById("secFamily").value;
+  isBuiltUp=(fam==="BUILDUP");
+  document.getElementById("std-sec-row").style.display=isBuiltUp?"none":"block";
+  document.getElementById("buildup-rows").style.display=isBuiltUp?"block":"none";
+  if(!isBuiltUp)populateDesig(fam);
+  onSectionChange();
+}
+function populateDesig(fam){
+  const sel=document.getElementById("secDesig");
+  sel.innerHTML="";
+  (SECTIONS[fam]||[]).forEach(s=>{const o=document.createElement("option");o.value=s[0];o.textContent=s[0];sel.appendChild(o);});
+  sel.selectedIndex=Math.floor(sel.options.length/2);
+}
+function getSectionProps(){
+  if(isBuiltUp)return getBuiltUpProps();
+  const fam=document.getElementById("secFamily").value;
+  const desig=document.getElementById("secDesig").value;
+  const r=(SECTIONS[fam]||[]).find(x=>x[0]===desig);
+  if(!r)return null;
+  // NOTE: the hardcoded rxx/ryy table columns (r[13],r[14]) were found to be systematically
+  // wrong (off by a factor of ~√10, i.e. ~3.16×, across the ENTIRE section database — verified
+  // against every family). Radius of gyration is recomputed directly here from Ixx/Iyy/A using
+  // the exact definition r = √(I/A), so it is always correct regardless of the stored table value.
+  const A_mm2=r[6],Ixx_cm4=r[7],Iyy_cm4=r[8];
+  const rxx_fixed=Math.sqrt(Ixx_cm4*1e4/A_mm2)/10;   // cm
+  const ryy_fixed=Math.sqrt(Iyy_cm4*1e4/A_mm2)/10;   // cm
+  return{name:r[0],D:r[1],bf:r[2],tf:r[3],tw:r[4],r1:r[5]||12,
+    A:r[6],Ixx:r[7],Iyy:r[8],Zxx:r[9],Zyy:r[10],Zpx:r[11],Zpy:r[12],
+    rxx:rxx_fixed,ryy:ryy_fixed,Iw:r[15]||0,It:r[16]||0,mass:r[17]||0,
+    isBuiltUp:false,secType:document.getElementById("secFamily").value};
+}
+function getBuiltUpProps(){
+  const bf1=+document.getElementById("bu_bf1").value||250;
+  const tf1=+document.getElementById("bu_tf1").value||16;
+  const dw=+document.getElementById("bu_dw").value||500;
+  const tw=+document.getElementById("bu_tw").value||10;
+  const bf2=+document.getElementById("bu_bf2").value||250;
+  const tf2=+document.getElementById("bu_tf2").value||16;
+  const D=tf1+dw+tf2, A=bf1*tf1+bf2*tf2+dw*tw, yCG=D/2;
+  const Ixx_cm4=((bf1*tf1**3/12+bf1*tf1*(D-tf1/2-yCG)**2)+(tw*dw**3/12)+(bf2*tf2**3/12+bf2*tf2*(tf2/2-yCG)**2))/1e4;
+  const Iyy_cm4=(bf1**3*tf1/12+bf2**3*tf2/12+dw*tw**3/12)/1e4;
+  const Zxx_cm3=Ixx_cm4*10/(D/10), Zpx_cm3=Zxx_cm3*1.12;
+  const rxx=Math.sqrt(Ixx_cm4*1e4/A)/10, ryy=Math.sqrt(Iyy_cm4*1e4/A)/10;
+  return{name:`BU ${D}×${bf1}×${tw}`,D,bf:Math.max(bf1,bf2),tf:Math.max(tf1,tf2),tw,r1:0,A,
+    Ixx:Ixx_cm4,Iyy:Iyy_cm4,Zxx:Zxx_cm3,Zyy:0,Zpx:Zpx_cm3,Zpy:0,rxx,ryy,
+    Iw:0,It:(dw*tw**3/3+bf1*tf1**3/3+bf2*tf2**3/3)/1e4,mass:A*7.85e-3,
+    isBuiltUp:true,secType:"BUILDUP",bf1,tf1,dw,tw,bf2,tf2};
+}
+function onBUChange(){onSectionChange();}
+function onSectionChange(){
+  currentSec=getSectionProps();
+  if(!currentSec)return;
+  drawCrossSection(currentSec);
+  updateSecProps(currentSec);
+  updateAll();
+}
+
+function drawCrossSection(s){
+  const svg=document.getElementById("svg-cross"); svg.innerHTML="";
+  const se=(t,a)=>{const el=document.createElementNS("http://www.w3.org/2000/svg",t);Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v));return el};
+  if(s.secType==="ISMC"){
+    const sc=Math.min(70/s.bf,90/s.D)*0.9,ox=5,oy=5,W2=s.bf*sc,H=s.D*sc,tf=s.tf*sc,tw=s.tw*sc;
+    svg.appendChild(se("rect",{x:ox,y:oy,width:W2,height:tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+    svg.appendChild(se("rect",{x:ox,y:oy+H-tf,width:W2,height:tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+    svg.appendChild(se("rect",{x:ox,y:oy+tf,width:tw,height:H-2*tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+  }else{
+    const sc=Math.min(62/s.bf,88/s.D)*0.92,ox=(80-s.bf*sc)/2,oy=(100-s.D*sc)/2;
+    const W2=s.bf*sc,H=s.D*sc,tf=s.tf*sc,tw=s.tw*sc,wx=(W2-tw)/2;
+    svg.appendChild(se("rect",{x:ox,y:oy,width:W2,height:tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+    svg.appendChild(se("rect",{x:ox,y:oy+H-tf,width:W2,height:tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+    svg.appendChild(se("rect",{x:ox+wx,y:oy+tf,width:tw,height:H-2*tf,fill:"#38bdf8",stroke:"#0f172a","stroke-width":.5}));
+  }
+}
+function updateSecProps(s){
+  document.getElementById("sec-name-badge").textContent=s.name;
+  const props=[["D",`${s.D} mm`],["bf",`${s.bf} mm`],["tf",`${s.tf} mm`],["tw",`${s.tw} mm`],
+    ["A",`${Math.round(s.A)} mm²`],["Ixx",`${s.Ixx.toFixed(0)} cm⁴`],
+    ["Zxx",`${s.Zxx.toFixed(0)} cm³`],["Zpx",`${s.Zpx.toFixed(0)} cm³`],
+    ["ryy",`${(s.ryy||0).toFixed(2)} cm`],["mass",`${s.mass<10?s.mass.toFixed(1):Math.round(s.mass)} kg/m`]];
+  document.getElementById("sec-props-list").innerHTML=props.map(([k,v])=>`<div class="sp">${k}: <b>${v}</b></div>`).join("");
+}
+
+function toggleLoad(id){
+  activeLoads[id]=!activeLoads[id];
+  const on=activeLoads[id],col=id==="DL"?"#94a3b8":id==="LL"?"#f59e0b":id==="HZ"?"#f472b6":"#38bdf8";
+  document.getElementById("sw-"+id).style.background=on?col:"var(--dim)";
+  document.getElementById("kn-"+id).style.left=on?"16px":"2px";
+  document.getElementById("ctrl-"+id).style.display=on?"block":"none";
+  updateAll();
+}
+function showLoadTab(id){
+  document.querySelectorAll("#load-tabs .tab").forEach((t,i)=>t.classList.toggle("active",["gravity","horiz","axial","moment"][i]===id));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("lt-"+id).classList.add("active");
+}
+
+function getUDLu(){
+  const gDL=+document.getElementById("lf-DL").value||1.5;
+  const gLL=+document.getElementById("lf-LL").value||1.5;
+  const gWL=+document.getElementById("lf-WL").value||1.5;
+  const wDL=activeLoads.DL?(+document.getElementById("sl-wDL").value||0):0;
+  const wLL=activeLoads.LL?(+document.getElementById("sl-wLL").value||0):0;
+  const wWL=activeLoads.WL?(+document.getElementById("sl-wWL").value||0):0;
+  return Math.max(gDL*wDL+gLL*wLL, 1.2*(wDL+wLL+wWL), 0.9*wDL+1.5*wWL);
+}
+function getUDLs(){
+  const wDL=activeLoads.DL?(+document.getElementById("sl-wDL").value||0):0;
+  const wLL=activeLoads.LL?(+document.getElementById("sl-wLL").value||0):0;
+  return wDL+wLL;
+}
+function getSupCond(){return document.getElementById("supCond").value;}
+
+// ── HORIZONTAL (minor-axis) LOADS ──
+function getUDLu_H(){
+  const gHZ=+document.getElementById("lf-HZ")?.value||1.5;
+  const wHZ=activeLoads.HZ?(+document.getElementById("sl-wHZ").value||0):0;
+  return gHZ*wHZ;
+}
+function calcReactionsH(){
+  const sc=getSupCond(),wu=getUDLu_H();
+  let RA=0,RB=0;
+  if(sc==="SS"){RA=wu*L/2;RB=wu*L/2;pointLoadsH.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="CANT"){RA=wu*L+pointLoadsH.reduce((s,{P})=>s+P,0);RB=0;}
+  else if(sc==="FIXED"){RA=wu*L/2;RB=wu*L/2;pointLoadsH.forEach(({P,x})=>{RA+=P*(L-x)/L;RB+=P*x/L;});}
+  else if(sc==="PROPPED"){RB=3*wu*L/8;RA=5*wu*L/8;pointLoadsH.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="OVERHANG"){const c=cOver,tL=L+c;RA=wu*tL*(tL/2-c)/L+wu*c*c/(2*L);RB=wu*tL-RA;pointLoadsH.forEach(({P,x})=>{if(x<=L){RB+=P*x/L;RA+=P*(L-x)/L;}});}
+  return{RA,RB};
+}
+function bmFuncH(x){
+  const sc=getSupCond(),wu=getUDLu_H(),{RA}=calcReactionsH();
+  if(sc==="CANT")return -(wu*(L-x)**2/2);
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x)**2/2);}
+  let m=RA*x-wu*x*x/2;
+  pointLoadsH.forEach(({P,x:a})=>{if(x>a)m-=P*(x-a);});
+  if(sc==="FIXED"){m-=wu*L*L/12;}
+  return m;
+}
+function sfFuncH(x){
+  const sc=getSupCond(),wu=getUDLu_H(),{RA}=calcReactionsH();
+  if(sc==="CANT"){let v=wu*(L-x);pointLoadsH.forEach(({P,x:a})=>{if(x<a)v+=P;});return -v;}
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x));}
+  let v=RA-wu*x;
+  pointLoadsH.forEach(({P,x:a})=>{if(x>a)v-=P;});
+  return v;
+}
+function maxBM_H(){return Math.max(...sample(bmFuncH).map(Math.abs),0);}
+function maxSF_H(){return Math.max(...sample(sfFuncH).map(Math.abs),0);}
+
+function calcReactions(){
+  const sc=getSupCond(),wu=getUDLu();
+  let RA=0,RB=0;
+  if(sc==="SS"){RA=wu*L/2;RB=wu*L/2;pointLoads.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="CANT"){RA=wu*L+pointLoads.reduce((s,{P})=>s+P,0);RB=0;}
+  else if(sc==="FIXED"){RA=wu*L/2;RB=wu*L/2;pointLoads.forEach(({P,x})=>{RA+=P*(L-x)/L;RB+=P*x/L;});}
+  else if(sc==="PROPPED"){RB=3*wu*L/8;RA=5*wu*L/8;pointLoads.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="OVERHANG"){const c=cOver,tL=L+c;RA=wu*tL*(tL/2-c)/L+wu*c*c/(2*L);RB=wu*tL-RA;pointLoads.forEach(({P,x})=>{if(x<=L){RB+=P*x/L;RA+=P*(L-x)/L;}});}
+  return{RA,RB};
+}
+
+function totalLen(){return getSupCond()==="OVERHANG"?L+cOver:L;}
+function bmFunc(x){
+  const sc=getSupCond(),wu=getUDLu(),{RA}=calcReactions();
+  if(sc==="CANT")return -(wu*(L-x)**2/2);
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x)**2/2);}
+  let m=RA*x-wu*x*x/2;
+  pointLoads.forEach(({P,x:a})=>{if(x>a)m-=P*(x-a);});
+  if(sc==="FIXED"){m-=wu*L*L/12;}
+  return m;
+}
+function sfFunc(x){
+  const sc=getSupCond(),wu=getUDLu(),{RA}=calcReactions();
+  if(sc==="CANT"){let v=wu*(L-x);pointLoads.forEach(({P,x:a})=>{if(x<a)v+=P;});return -v;}
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x));}
+  let v=RA-wu*x;
+  pointLoads.forEach(({P,x:a})=>{if(x>a)v-=P;});
+  return v;
+}
+
+// ── DEFLECTION (corrected elastic curves) ──
+function defFunc(x){
+  if(!currentSec)return 0;
+  const ws=getUDLs(),E=200000,EI=E*currentSec.Ixx*1e4;
+  const Lmm=L*1000,xmm=x*1000,sc=getSupCond();
+  let delta=0;
+  if(ws>0){
+    if(sc==="SS"||sc==="OVERHANG") delta+=ws*xmm*(Lmm**3-2*Lmm*xmm*xmm+xmm**3)/(24*EI);
+    else if(sc==="CANT") delta+=ws*(6*Lmm*Lmm*xmm*xmm-4*Lmm*xmm**3+xmm**4)/(24*EI);
+    else if(sc==="FIXED") delta+=ws*xmm*xmm*(Lmm-xmm)**2/(24*EI);
+    else if(sc==="PROPPED") delta+=ws*xmm*(3*Lmm**3-5*Lmm*xmm*xmm+2*xmm**3)/(48*EI);
+  }
+  pointLoads.forEach(({P,x:a})=>{
+    const Pn=P*1000,amm=a*1000,bmm=Lmm-amm;
+    if(amm<=0||bmm<=0)return;
+    if(sc==="SS"||sc==="OVERHANG"){
+      if(xmm<=amm) delta+=Pn*bmm*xmm*(Lmm*Lmm-bmm*bmm-xmm*xmm)/(6*Lmm*EI);
+      else{const d=Lmm-xmm;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}
+    }else if(sc==="CANT"){
+      if(xmm<=amm)delta+=Pn*xmm*xmm*(3*amm-xmm)/(6*EI);
+      else delta+=Pn*amm*amm*(3*xmm-amm)/(6*EI);
+    }else if(sc==="FIXED"){
+      if(xmm<=amm)delta+=Pn*bmm*bmm*xmm*xmm*(3*amm*Lmm-(3*amm+bmm)*xmm)/(6*EI*Lmm**3);
+      else{const xr=Lmm-xmm;delta+=Pn*amm*amm*xr*xr*(3*bmm*Lmm-(3*bmm+amm)*xr)/(6*EI*Lmm**3);}
+    }else if(sc==="PROPPED"){
+      if(xmm<=amm)delta+=Pn*bmm*xmm*(Lmm*Lmm-bmm*bmm-xmm*xmm)/(6*Lmm*EI);
+      else{const d=Lmm-xmm;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}
+    }
+  });
+  return Math.max(0,delta);
+}
+function maxDeflection(){
+  if(!currentSec)return 0;
+  const sc=getSupCond(),ws=getUDLs(),E=200000,EI=E*currentSec.Ixx*1e4,Lmm=L*1000;
+  let delta=0;
+  if(ws>0){
+    if(sc==="SS")delta=5*ws*Lmm**4/(384*EI);
+    else if(sc==="CANT")delta=ws*Lmm**4/(8*EI);
+    else if(sc==="FIXED")delta=ws*Lmm**4/(384*EI);
+    else if(sc==="PROPPED")delta=ws*Lmm**4/(185*EI);
+    else if(sc==="OVERHANG")delta=5*ws*Lmm**4/(384*EI);
+  }
+  pointLoads.forEach(({P,x:a})=>{
+    const Pn=P*1000,amm=a*1000,bmm=Lmm-amm;
+    if(amm<=0||bmm<=0)return;
+    if(sc==="SS"||sc==="OVERHANG"){
+      if(amm>=bmm){const xmax=Math.sqrt((Lmm*Lmm-bmm*bmm)/3);if(xmax>0&&xmax<amm){delta+=Pn*bmm*xmax*(Lmm*Lmm-bmm*bmm-xmax*xmax)/(6*Lmm*EI);}else{const xm=Lmm/2;if(xm<=amm)delta+=Pn*bmm*xm*(Lmm*Lmm-bmm*bmm-xm*xm)/(6*Lmm*EI);else{const d=Lmm-xm;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}}}
+      else{const xmax_r=Math.sqrt((Lmm*Lmm-amm*amm)/3),xmax=Lmm-xmax_r;if(xmax>amm&&xmax<Lmm){const d=Lmm-xmax;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}else{const xm=Lmm/2;if(xm<=amm)delta+=Pn*bmm*xm*(Lmm*Lmm-bmm*bmm-xm*xm)/(6*Lmm*EI);else{const d=Lmm-xm;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}}}
+    }else if(sc==="CANT"){delta+=Pn*amm*amm*(3*Lmm-amm)/(6*EI);}
+    else if(sc==="FIXED"){delta+=Pn*Lmm**3/(192*EI);}
+    else if(sc==="PROPPED"){const xm=Lmm/2;if(xm<=amm)delta+=Pn*bmm*xm*(Lmm*Lmm-bmm*bmm-xm*xm)/(6*Lmm*EI);else{const d=Lmm-xm;delta+=Pn*amm*d*(2*Lmm*d-amm*amm-d*d)/(6*Lmm*EI);}}
+  });
+  return delta;
+}
+
+function sample(fn,N=300){const T=totalLen();return Array.from({length:N+1},(_,i)=>fn(i/N*T));}
+
+// ═══════════════════════════════════════════════════════════════
+// IS 800 DESIGN CHECKS — ALL BUGS FIXED
+// ═══════════════════════════════════════════════════════════════
+function runDesignChecks(){
+  if(!currentSec)return[];
+  const s=currentSec;
+  const fy=+document.getElementById("steelGrade").value||250;
+  const gm0=1.10,gm1=1.25,E=200000,G=0.769*E;
+  const memberType=document.getElementById("memberType").value;
+
+  const bmVals=sample(bmFunc),sfVals=sample(sfFunc);
+  const Mu=Math.max(...bmVals.map(Math.abs));
+  const Vu=Math.max(...sfVals.map(Math.abs));
+
+  const LLT=(+document.getElementById("inp-LLT").value||L)*1000;
+  const KyL_mm=(+document.getElementById("inp-KyL").value||L)*1000;
+  const KzL_mm=(+document.getElementById("inp-KzL").value||L)*1000; // ✅ NOW USED
+  const Ft=+document.getElementById("inp-Ft").value||0;
+  const Fc=+document.getElementById("inp-Fc").value||0;
+  const Mx_app=+document.getElementById("inp-Mx").value||0;
+  const My_app=+document.getElementById("inp-My").value||0;
+  const alpha_buck=+document.getElementById("buckCurve").value||0.34;
+
+  const eps=Math.sqrt(250/fy);
+  const b_flange=(s.bf-s.tw)/2;
+  const d_web=s.D-2*s.tf-2*(s.r1||0);
+  const bOverTf=b_flange/s.tf,dOverTw=d_web/s.tw;
+  const compact_flange=bOverTf<=9.4*eps,compact_web=dOverTw<=84*eps;
+  const semicompact_flange=bOverTf<=13.6*eps;
+  const classification=(compact_flange&&compact_web)?"PLASTIC/COMPACT":(semicompact_flange?"SEMI-COMPACT":"SLENDER");
+  const bb=classification==="SEMI-COMPACT"?0.83:1.0;
+  const fyd=fy/gm0;
+  const Zpx_mm3=s.Zpx*1000;  // cm³ → mm³
+  const Mdx_kNm=bb*Zpx_mm3*fyd/1e6;
+
+  // ── CHECK 1: LTB ──
+  const Iy_mm4=(s.Iyy||s.Ixx*0.05)*1e4;
+  const Iw_mm6=(s.Iw||0)*1e12;
+  const It_mm4=(s.It||0)*1e4;
+  let chi_LT=1,Mdx_LTB_kNm=Mdx_kNm;
+  if(s.Iyy>0){
+    let Mcr_kNm=(Math.PI**2*E*Iy_mm4/(LLT**2))*Math.sqrt(Iw_mm6/Iy_mm4+LLT**2*G*It_mm4/(Math.PI**2*E*Iy_mm4))/1e6;
+    if(Mcr_kNm<0.001)Mcr_kNm=Mdx_kNm;
+    const lambdaLT=Math.sqrt(bb*Zpx_mm3*fy/(Mcr_kNm*1e6));
+    const phiLT=0.5*(1+0.21*(lambdaLT-0.2)+lambdaLT**2);
+    chi_LT=Math.min(1,1/(phiLT+Math.sqrt(Math.max(0,phiLT**2-lambdaLT**2))));
+    if(!isFinite(chi_LT)||isNaN(chi_LT))chi_LT=1;
+    Mdx_LTB_kNm=Math.min(chi_LT*bb*Zpx_mm3*fy/(gm0*1e6),Mdx_kNm);
+  }
+
+  // ── CHECK 2: SHEAR — IS 800 Cl 8.4.1.1: Av = D*tw for rolled sections ──
+  const Av=s.D*s.tw;
+  const Vdx_kN=Av*fy/(Math.sqrt(3)*gm0*1000);
+
+  // ── CHECK 3: M-V INTERACTION — IS 800 Cl 9.3.1.1 ──
+  // FIXED: Mdf = (Zpx - tw*dw²/4)*fy/gm0  (was wrongly omitting Zpx)
+  let UR_mv=0;
+  if(Vu>0.6*Vdx_kN&&Mu>0){
+    const phi_mv=(2*Vu/Vdx_kN-1)**2;
+    // Web plastic modulus (mm³): Zpw = tw*dw²/4
+    const Zpw_mm3=s.tw*d_web*d_web/4;
+    // Flange-only moment capacity:
+    const Mdf_kNm=(Zpx_mm3-Zpw_mm3)*fyd/1e6;  // ✅ FIXED — was missing Zpx
+    const Mdv_kNm=Math.max(Mdx_LTB_kNm-phi_mv*(Mdx_LTB_kNm-Mdf_kNm), 0.001);
+    UR_mv=Mu/Mdv_kNm;
+  }
+
+  // ── CHECK 4: DEFLECTION ──
+  const delta=maxDeflection();
+  const deflRatio=+document.getElementById("deflLimit").value||300;
+  const deflAllow=L*1000/deflRatio;
+  const deflUR=delta/deflAllow;
+
+  // ── CHECK 5: TENSION ──
+  const Ag=s.A;
+  const Tdg_kN=Ag*fy/(gm0*1000);
+  const UR_tens=Ft>0?Ft/Tdg_kN:0;
+
+  // ── CHECK 6: COMPRESSION — FIXED: now uses max(KyL/ryy, KzL/rxx) ──
+  const ryy_mm=(s.ryy||1)*10;
+  const rxx_mm=(s.rxx||1)*10;
+  const KLr_y=KyL_mm/ryy_mm;
+  const KLr_z=KzL_mm/rxx_mm;
+  const KL_r=Math.max(KLr_y,KLr_z);  // ✅ FIXED — was only KLr_y
+  const govAxis=KLr_y>=KLr_z?"y (minor)":"z (major)";
+  const lambda=(KL_r/Math.PI)*Math.sqrt(fy/E);
+  const phi=0.5*(1+alpha_buck*(lambda-0.2)+lambda**2);
+  const chi=Math.min(1,1/(phi+Math.sqrt(Math.max(0,phi**2-lambda**2))));
+  const fcd=chi*fy/gm0;
+  const Pd_kN=Ag*fcd/1000;
+  const UR_comp=Fc>0?Fc/Pd_kN:0;
+
+  // ── CHECK 7: BIAXIAL BENDING + AXIAL FORCE — IS 800 Cl 9.3.1.1 / 9.3.1.2 ──
+  // Mx_total = Mu (from transverse gravity loads) + Mx_app (additional major-axis moment input)
+  // My_total = My_horiz (auto, from HORIZONTAL tab UDL/point loads) + My_app (manual extra input)
+  // These are concurrent, so addition is correct.
+  const Mx_total=Mu+Mx_app;
+  const My_horiz=maxBM_H();
+  const My_total=My_horiz+My_app;
+  document.getElementById("hz-summary").textContent=`My from horizontal loads: ${My_horiz.toFixed(1)} kN·m (factored)`;
+  const Zpy_mm3=(s.Zpy||s.Zyy*1.12)*1000;
+  const Mdy_kNm=Zpy_mm3*fyd/1e6;
+  // n = N/Nd where Nd = Ag.fy/gm0 (squash load, Cl 9.3.1.1) — NOT the buckling Pd.
+  const N_biax_kN=Fc>0?Fc:Ft;
+  const Nd_kN=Tdg_kN; // = Ag*fy/gm0, already computed in CHECK 5
+  const n_biax=Nd_kN>0?Math.min(1,N_biax_kN/Nd_kN):0;
+  const bf_flange=s.bf||0;
+  const aw_biax=Math.min(0.5,Math.max(0,(Ag-2*bf_flange*s.tf)/Ag));
+  // Mndz/Mndy: reduced design bending strengths under combined axial+bending, Cl 9.3.1.2 (I & channel sections)
+  const Mndz_kNm=Math.min(Mdx_LTB_kNm, Mdx_LTB_kNm*(1-n_biax)/(1-0.5*aw_biax));
+  const Mndy_kNm=n_biax<=aw_biax?Mdy_kNm:Mdy_kNm*(1-Math.pow((n_biax-aw_biax)/(1-aw_biax),2));
+  // Exponents for I & channel sections, Cl 9.3.1.1: alpha1=2, alpha2=5n (not less than 1)
+  const alpha1_biax=2,alpha2_biax=Math.max(5*n_biax,1);
+  const biaxActive=Mx_app>0||My_app>0||My_horiz>0.01||Fc>0.1||Ft>0.1;
+  let UR_biax=0;
+  if(biaxActive){
+    UR_biax=Math.pow(Mx_total/Math.max(Mndz_kNm,0.001),alpha1_biax)+Math.pow(My_total/Math.max(Mndy_kNm,0.001),alpha2_biax);
+  }
+
+  // ── CHECK 8: SLENDERNESS — FIXED: max both axes + limit per member type ──
+  // IS 800 Cl 3.8: 180 (compression/beam), 300 (tension), 400 (tension secondary)
+  const KLr_max=Math.max(KLr_y,KLr_z);  // ✅ FIXED — was only KLr_y
+  let slendLimit=180;
+  if(memberType==="strut"&&Ft>0)slendLimit=300;       // tension strut
+  else if(memberType==="beam")slendLimit=300;          // beam: generally 300 for lateral stability
+  const UR_slend=KLr_max/slendLimit;
+
+  // ── Section Classification Output ──
+  document.getElementById("sec-class-out").innerHTML=`
+    <b style="color:var(--accent)">Classification:</b> ${classification} &nbsp;|&nbsp; ε = ${eps.toFixed(3)}<br>
+    Flange b/tf = ${bOverTf.toFixed(1)} (compact ≤${(9.4*eps).toFixed(1)}, semi ≤${(13.6*eps).toFixed(1)})<br>
+    Web d/tw = ${dOverTw.toFixed(1)} (compact ≤${(84*eps).toFixed(1)}, semi ≤${(126*eps).toFixed(1)})<br>
+    <b style="color:var(--gold)">fyd</b> = ${fyd.toFixed(1)} MPa &nbsp;|&nbsp;
+    <b style="color:var(--purple)">Mdx</b> = ${Mdx_kNm.toFixed(1)} kN·m &nbsp;|&nbsp;
+    <b style="color:var(--pink)">Mdx_LTB</b> = ${Mdx_LTB_kNm.toFixed(1)} kN·m<br>
+    <b style="color:#34d399">Vdx</b> = ${Vdx_kN.toFixed(1)} kN &nbsp;|&nbsp;
+    <b style="color:var(--orange)">Pd</b> = ${Pd_kN.toFixed(1)} kN &nbsp;|&nbsp;
+    <b style="color:var(--accent)">Tdg</b> = ${Tdg_kN.toFixed(1)} kN<br>
+    KL/r: y=${KLr_y.toFixed(1)}, z=${KLr_z.toFixed(1)}, gov=${KL_r.toFixed(1)} (${govAxis}) &nbsp;|&nbsp;
+    χ=${chi.toFixed(3)} &nbsp;|&nbsp; fcd=${fcd.toFixed(1)} MPa
+  `;
+
+  function remedyFor(ur,failMsg,warnMsg,okMsg){
+    if(ur>1.0)return{level:"fail",text:failMsg};
+    if(ur>0.75)return{level:"warn",text:warnMsg};
+    return{level:"ok",text:okMsg};
+  }
+  // Suggest the lightest section in the same family that meets a required value of a given property.
+  // idx = column index in the SECTIONS table (or use extraCalc(row) for a derived property like D*tw).
+  function suggestSection(idx,required,extraCalc){
+    if(isBuiltUp)return null;
+    const fam=s.secType,list=SECTIONS[fam];
+    if(!list)return null;
+    const val=r=>extraCalc?extraCalc(r):r[idx];
+    const candidates=list.filter(r=>val(r)>=required&&r[0]!==s.name);
+    if(candidates.length===0)return null;
+    candidates.sort((a,b)=>val(a)-val(b));
+    return candidates[0];
+  }
+
+  const ur_ltb=Mdx_LTB_kNm>0?Mu/Mdx_LTB_kNm:0;
+  const ur_shear=Vdx_kN>0?Vu/Vdx_kN:0;
+
+  const checks=[
+    {name:"Bending (LTB)",         clause:"IS 800 Cl. 8.2.2",
+     demand:`${Mu.toFixed(1)} kN·m`,   capacity:`${Mdx_LTB_kNm.toFixed(1)} kN·m`,
+     ur:ur_ltb, active:Mu>0.1,
+     calc:`Section: ${s.name} — ${classification} (b/tf=${bOverTf.toFixed(1)}, d/tw=${dOverTw.toFixed(1)}, ε=${eps.toFixed(3)})\n`+
+          `βb = ${bb.toFixed(2)} (compact→1.0, semi-compact→0.83)\n`+
+          `Zpx = ${s.Zpx} cm³ = ${Zpx_mm3.toFixed(0)} mm³\n`+
+          `fyd = fy/γm0 = ${fy}/${gm0} = ${fyd.toFixed(1)} MPa\n`+
+          `Mdx = βb·Zpx·fyd = ${bb.toFixed(2)}×${Zpx_mm3.toFixed(0)}×${fyd.toFixed(1)} = ${Mdx_kNm.toFixed(1)} kN·m\n`+
+          `LLT (unsupported length) = ${(LLT/1000).toFixed(2)} m → χLT (LTB reduction) = ${chi_LT.toFixed(3)}\n`+
+          `Mdx,LTB = min(χLT·βb·Zpx·fy/γm0 , Mdx) = ${Mdx_LTB_kNm.toFixed(1)} kN·m\n`+
+          `Mu (applied, factored) = ${Mu.toFixed(1)} kN·m\n`+
+          `UR = Mu / Mdx,LTB = ${Mu.toFixed(1)} / ${Mdx_LTB_kNm.toFixed(1)} = ${ur_ltb.toFixed(3)}`,
+     remedy:(()=>{
+       if(ur_ltb>1.0){
+         const reqZpx=(s.Zpx*ur_ltb).toFixed(0);
+         const sugg=suggestSection(11,+reqZpx);
+         const suggTxt=sugg?` A lighter fix: switch to ${sugg[0]} (Zpx=${sugg[11]} cm³) in the same family — that alone brings UR to about ${(ur_ltb*s.Zpx/sugg[11]).toFixed(2)}, which solves this check.`:" No lighter section in this family reaches that Zpx — go up a family (e.g. ISWB/ISHB) or add lateral restraints to shorten LLT (raising χLT and Mdx,LTB).";
+         return{level:"fail",text:`FAILS in bending — need Zpx ≥ ~${reqZpx} cm³ (currently ${s.Zpx} cm³), i.e. about ${((ur_ltb-1)*100).toFixed(0)}% more moment capacity.${suggTxt} Alternative: reduce LLT (add lateral restraints) or reduce span/loads.`};
+       }
+       return remedyFor(ur_ltb,"","Close to the limit (UR 0.75–1.0). Section is adequate but has little margin — consider the next size up if loads may increase.","OK — well within bending capacity.");
+     })()},
+
+    {name:"Shear (Major)",          clause:"IS 800 Cl. 8.4.1",
+     demand:`${Vu.toFixed(1)} kN`,     capacity:`${Vdx_kN.toFixed(1)} kN`,
+     ur:ur_shear,         active:Vu>0.1,
+     calc:`Shear area Av = D×tw = ${s.D}×${s.tw} = ${Av.toFixed(0)} mm²\n`+
+          `Vdx = Av·fy / (√3·γm0) = ${Av.toFixed(0)}×${fy} / (1.732×${gm0}) = ${Vdx_kN.toFixed(1)} kN\n`+
+          `Vu (applied, factored) = ${Vu.toFixed(1)} kN\n`+
+          `UR = Vu / Vdx = ${Vu.toFixed(1)} / ${Vdx_kN.toFixed(1)} = ${ur_shear.toFixed(3)}`,
+     remedy:(()=>{
+       if(ur_shear>1.0){
+         const reqAv=(Av*ur_shear).toFixed(0);
+         const sugg=suggestSection(null,+reqAv,r=>r[1]*r[4]);
+         const suggTxt=sugg?` Try ${sugg[0]} (D×tw=${(sugg[1]*sugg[4]).toFixed(0)} mm²) in the same family — that solves this check.`:" No lighter section in this family has enough shear area — go up a family or reduce end reactions (shorter span / lower loads).";
+         return{level:"fail",text:`FAILS in shear — need Av=D×tw ≥ ~${reqAv} mm² (currently ${Av.toFixed(0)} mm²), i.e. about ${((ur_shear-1)*100).toFixed(0)}% more shear area.${suggTxt}`};
+       }
+       return remedyFor(ur_shear,"","Close to the limit — adequate but little margin left for extra load.","OK — well within shear capacity.");
+     })()},
+
+    {name:"M-V Interaction",        clause:"IS 800 Cl. 9.3.1.1",
+     demand:`Vu=${Vu.toFixed(1)} kN`,  capacity:`0.6Vd=${(0.6*Vdx_kN).toFixed(1)} kN`,
+     ur:UR_mv,                          active:Vu>0.6*Vdx_kN,
+     calc:Vu>0.6*Vdx_kN?
+          (()=>{const phi_mv=(2*Vu/Vdx_kN-1)**2,Zpw_mm3=s.tw*d_web*d_web/4,Mdf_kNm=(Zpx_mm3-Zpw_mm3)*fyd/1e6,Mdv_kNm=Math.max(Mdx_LTB_kNm-phi_mv*(Mdx_LTB_kNm-Mdf_kNm),0.001);
+          return `High shear zone: Vu=${Vu.toFixed(1)} kN > 0.6·Vdx=${(0.6*Vdx_kN).toFixed(1)} kN → interaction check required\n`+
+          `φ = (2Vu/Vdx − 1)² = (2×${Vu.toFixed(1)}/${Vdx_kN.toFixed(1)} − 1)² = ${phi_mv.toFixed(3)}\n`+
+          `Zpw (web plastic modulus) = tw·dw²/4 = ${Zpw_mm3.toFixed(0)} mm³\n`+
+          `Mdf (flange-only capacity) = (Zpx−Zpw)·fyd = ${Mdf_kNm.toFixed(1)} kN·m\n`+
+          `Mdv = Mdx,LTB − φ(Mdx,LTB−Mdf) = ${Mdv_kNm.toFixed(1)} kN·m\n`+
+          `UR = Mu / Mdv = ${Mu.toFixed(1)} / ${Mdv_kNm.toFixed(1)} = ${UR_mv.toFixed(3)}`;})()
+          :`Vu (${Vu.toFixed(1)} kN) ≤ 0.6·Vdx (${(0.6*Vdx_kN).toFixed(1)} kN) → low shear zone, M-V interaction not required.`,
+     remedy:remedyFor(UR_mv,
+       "FAILS combined bending+shear at the high-shear location. Fix by: increasing section size, or re-checking whether max moment and max shear truly act at the same section (often they don't for simple beams).",
+       "Close to the limit under combined bending and shear.",
+       "OK — combined bending+shear is fine (or not governing).")},
+
+    {name:"Deflection (δ)",         clause:"IS 800 Table 6",
+     demand:`${delta.toFixed(2)} mm`,  capacity:`${deflAllow.toFixed(1)} mm (L/${deflRatio})`,
+     ur:deflUR,                         active:getUDLs()>0||pointLoads.length>0,
+     calc:`Service (unfactored) loads used: wDL+wLL = ${getUDLs().toFixed(1)} kN/m, plus any point loads\n`+
+          `δmax (elastic curve, E=${E} MPa, Ixx=${s.Ixx} cm⁴) = ${delta.toFixed(2)} mm\n`+
+          `Allowable = L/${deflRatio} = ${(L*1000).toFixed(0)}/${deflRatio} = ${deflAllow.toFixed(1)} mm\n`+
+          `UR = δ / δallow = ${delta.toFixed(2)} / ${deflAllow.toFixed(1)} = ${deflUR.toFixed(3)}`,
+     remedy:(()=>{
+       if(deflUR>1.0){
+         const reqIxx=(s.Ixx*deflUR).toFixed(0);
+         const sugg=suggestSection(7,+reqIxx);
+         const suggTxt=sugg?` Try ${sugg[0]} (Ixx=${sugg[7]} cm⁴) in the same family — that solves this check.`:" No lighter section in this family is stiff enough — go up a family, shorten the span, add an intermediate support, or (if applicable) relax the deflection limit.";
+         return{level:"fail",text:`FAILS deflection — need Ixx ≥ ~${reqIxx} cm⁴ (currently ${s.Ixx} cm⁴), i.e. about ${((deflUR-1)*100).toFixed(0)}% stiffer.${suggTxt}`};
+       }
+       return remedyFor(deflUR,"","Close to the deflection limit — usable but stiffer section recommended for comfort/serviceability.","OK — deflection well within the allowable limit.");
+     })()},
+
+    {name:"Tension Capacity",       clause:"IS 800 Cl. 6.2",
+     demand:`${Ft.toFixed(0)} kN`,     capacity:`${Tdg_kN.toFixed(1)} kN`,
+     ur:UR_tens,                        active:Ft>0.1,
+     calc:`Tdg = Ag·fy/γm0 = ${Ag.toFixed(0)}×${fy}/${gm0} = ${Tdg_kN.toFixed(1)} kN (yielding of gross section)\n`+
+          `Ft (applied) = ${Ft.toFixed(0)} kN\n`+
+          `UR = Ft / Tdg = ${Ft.toFixed(0)} / ${Tdg_kN.toFixed(1)} = ${UR_tens.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_tens>1.0){
+         const reqAg=(Ag*UR_tens).toFixed(0);
+         const sugg=suggestSection(6,+reqAg);
+         const suggTxt=sugg?` Try ${sugg[0]} (A=${sugg[6]} mm²) in the same family — that solves this check.`:" No lighter section in this family has enough area — go up a family or use a higher steel grade.";
+         return{level:"fail",text:`FAILS in tension — need Ag ≥ ~${reqAg} mm² (currently ${Ag.toFixed(0)} mm²), i.e. about ${((UR_tens-1)*100).toFixed(0)}% more area.${suggTxt}`};
+       }
+       return remedyFor(UR_tens,"","Close to the limit — little reserve capacity in tension.","OK — well within tension capacity.");
+     })()},
+
+    {name:"Compression (Pd)",       clause:"IS 800 Cl. 7",
+     demand:`${Fc.toFixed(0)} kN`,     capacity:`${Pd_kN.toFixed(1)} kN`,
+     ur:UR_comp,                        active:Fc>0.1,
+     calc:`KL/r: y-axis=${KLr_y.toFixed(1)}, z-axis=${KLr_z.toFixed(1)} → governing = ${KL_r.toFixed(1)} (${govAxis})\n`+
+          `λ (non-dim. slenderness) = (KL/r)/π · √(fy/E) = ${lambda.toFixed(3)}\n`+
+          `φ = 0.5[1+α(λ−0.2)+λ²] = ${phi.toFixed(3)} (buckling curve α=${alpha_buck})\n`+
+          `χ (reduction factor) = 1/(φ+√(φ²−λ²)) = ${chi.toFixed(3)}\n`+
+          `fcd = χ·fy/γm0 = ${fcd.toFixed(1)} MPa\n`+
+          `Pd = Ag·fcd = ${Ag.toFixed(0)}×${fcd.toFixed(1)} = ${Pd_kN.toFixed(1)} kN\n`+
+          `UR = Fc / Pd = ${Fc.toFixed(0)} / ${Pd_kN.toFixed(1)} = ${UR_comp.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_comp>1.0){
+         const reqAg_mm2=(Ag*UR_comp).toFixed(0);
+         const sugg=suggestSection(6,+reqAg_mm2);
+         const suggTxt=sugg?` As a first estimate, try ${sugg[0]} (A=${sugg[6]} mm²) — re-run the check afterward since χ/fcd shift with the new section (this isn't exact).`:" No lighter section in this family has enough area — go up a family.";
+         return{level:"fail",text:`FAILS in compression (buckling-governed) on the ${govAxis} axis — approx. ${((UR_comp-1)*100).toFixed(0)}% more capacity needed.${suggTxt} Often cheaper: reduce effective length KL by adding bracing/restraints along the ${govAxis} axis, which directly lowers KL/r and raises fcd.`};
+       }
+       return remedyFor(UR_comp,"","Close to the buckling limit — some margin but sensitive to imperfections/eccentricity.","OK — well within compression (buckling) capacity.");
+     })()},
+
+    {name:"Biaxial Bending",        clause:"IS 800 Cl. 9.3.1.1",
+     demand:`Mx=${Mx_total.toFixed(1)}, My=${My_total.toFixed(1)} (${My_horiz.toFixed(1)}+${My_app.toFixed(1)}), N=${N_biax_kN.toFixed(1)}`,
+     capacity:`Mndz=${Mndz_kNm.toFixed(1)}, Mndy=${Mndy_kNm.toFixed(1)}`,
+     ur:UR_biax,                        active:biaxActive,
+     calc:`Mx,total = Mu(from gravity loads) + Mx_app = ${Mu.toFixed(1)} + ${Mx_app.toFixed(1)} = ${Mx_total.toFixed(1)} kN·m\n`+
+          `My,horiz (from HORIZONTAL tab loads, factored, max along span) = ${My_horiz.toFixed(1)} kN·m\n`+
+          `My,total = My,horiz + My_app = ${My_horiz.toFixed(1)} + ${My_app.toFixed(1)} = ${My_total.toFixed(1)} kN·m\n`+
+          `Mdy = Zpy·fyd = ${Zpy_mm3.toFixed(0)}×${fyd.toFixed(1)} /1e6 = ${Mdy_kNm.toFixed(1)} kN·m\n`+
+          `n = N/Nd = ${N_biax_kN.toFixed(1)}/${Nd_kN.toFixed(1)} = ${n_biax.toFixed(3)}  (Nd = Ag·fy/γm0, squash load)\n`+
+          `aw = (A−2·bf·tf)/A = ${aw_biax.toFixed(3)} (capped ≤ 0.5)\n`+
+          `Mndz = min[Mdx,LTB , Mdx,LTB·(1−n)/(1−0.5aw)] = ${Mndz_kNm.toFixed(1)} kN·m\n`+
+          `Mndy = ${n_biax<=aw_biax?"Mdy (since n ≤ aw)":"Mdy·[1−((n−aw)/(1−aw))²] (since n > aw)"} = ${Mndy_kNm.toFixed(1)} kN·m\n`+
+          `α1 = 2, α2 = max(5n, 1) = ${alpha2_biax.toFixed(2)}  (I-section exponents, Cl 9.3.1.1)\n`+
+          `UR = (Mx,total/Mndz)^α1 + (My,total/Mndy)^α2 = (${Mx_total.toFixed(1)}/${Mndz_kNm.toFixed(1)})^${alpha1_biax} + (${My_total.toFixed(1)}/${Mndy_kNm.toFixed(1)})^${alpha2_biax.toFixed(2)} = ${UR_biax.toFixed(3)}`,
+     remedy:remedyFor(UR_biax,
+       "FAILS combined axial+biaxial bending (Cl 9.3.1.1/9.3.1.2). Fix by: increasing section size (higher Zpx/Zpy), reducing the horizontal force or its lever arm, reducing the applied secondary moment My, or reducing the axial force N if the load path allows it.",
+       "Close to the limit under combined axial+biaxial bending.",
+       "OK — combined axial+biaxial bending within capacity (or not applicable).")},
+
+    {name:`Slenderness (KL/r) [${govAxis}]`, clause:"IS 800 Cl. 3.8",
+     demand:`${KLr_max.toFixed(1)}`,   capacity:`≤ ${slendLimit}`,
+     ur:UR_slend,                        active:true,
+     calc:`KL/r governing = max(y=${KLr_y.toFixed(1)}, z=${KLr_z.toFixed(1)}) = ${KLr_max.toFixed(1)}\n`+
+          `Code limit for ${memberType} = ${slendLimit} (IS 800 Cl. 3.8, Table 3)\n`+
+          `UR = (KL/r) / limit = ${KLr_max.toFixed(1)} / ${slendLimit} = ${UR_slend.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_slend>1.0){
+         const governIdx=KLr_y>=KLr_z?14:13; // ryy or rxx column in SECTIONS
+         const KLmm=governIdx===14?KyL_mm:KzL_mm;
+         const reqR_cm=((KLmm/slendLimit)/10).toFixed(2);
+         const sugg=suggestSection(governIdx,+reqR_cm);
+         const suggTxt=sugg?` Try ${sugg[0]} (r=${sugg[governIdx]} cm on the ${govAxis} axis) in the same family — that solves this check.`:" No lighter section in this family has enough radius of gyration — go up a family, or (better) reduce the effective length KL by adding intermediate bracing/restraints.";
+         return{level:"fail",text:`FAILS slenderness on the ${govAxis} axis — need r ≥ ~${reqR_cm} cm (currently ${(governIdx===14?s.ryy:s.rxx)} cm).${suggTxt} Reducing KL (bracing) is usually cheaper than upsizing the section.`};
+       }
+       return remedyFor(UR_slend,"","Close to the slenderness limit — consider extra restraint if practical.","OK — well within the slenderness limit.");
+     })()}
+  ];
+
+  renderChecks(checks);
+
+  const govUR=Math.max(...checks.filter(c=>c.active).map(c=>c.ur));
+  const banner=document.getElementById("status-banner");
+  if(govUR<=0.001){banner.textContent="⏳ ADD LOADS TO BEGIN";banner.style.cssText="background:#111827;border-color:var(--border);color:var(--muted)";}
+  else if(govUR<=1.0){banner.textContent=`✅ SECTION ADEQUATE  —  Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#052e16;border-color:var(--green);color:var(--green)";}
+  else{banner.textContent=`❌ SECTION INADEQUATE  —  Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#1c0a0a;border-color:var(--red);color:var(--red)";}
+  banner.style.padding="10px 14px";banner.style.borderRadius="6px";banner.style.textAlign="center";banner.style.fontSize="14px";banner.style.letterSpacing="2px";banner.style.fontWeight="bold";banner.style.marginBottom="8px";banner.style.border="1px solid";
+  return checks;
+}
+
+function toggleCheckDetail(i){
+  const row=document.getElementById("check-detail-"+i);
+  if(row)row.style.display=row.style.display==="none"?"table-row":"none";
+}
+function renderChecks(checks){
+  const tbody=document.getElementById("check-tbody");
+  tbody.innerHTML="";
+  checks.forEach((c,i)=>{
+    const ur=c.active?c.ur:null;
+    const urStr=ur!==null?ur.toFixed(3):"N/A";
+    const statusStr=ur===null?"N/A":ur<=0.001?"N/L":ur<=0.75?"✅ PASS":ur<=1.0?"⚠ PASS":"❌ FAIL";
+    const urColor=ur===null?"#334155":ur<=0.75?"#22c55e":ur<=1.0?"#f59e0b":"#ef4444";
+    const fillPct=ur!==null?Math.min(ur*100,100).toFixed(1):0;
+    const pass=ur===null?"na":ur<=1.0?"pass":"fail";
+    const tr=document.createElement("tr");
+    tr.style.cursor="pointer";
+    tr.title="Click for full calculation & solution";
+    tr.onclick=()=>toggleCheckDetail(i);
+    tr.innerHTML=`<td style="color:var(--text)">${c.name} <span style="color:var(--muted);font-size:9px">▸ calc</span></td><td style="color:var(--muted)">${c.clause}</td><td style="color:#94a3b8">${c.demand}</td><td style="color:#94a3b8">${c.capacity}</td>
+      <td><div style="color:${urColor};font-weight:bold;font-size:11px">${urStr}</div><div class="urbar-wrap"><div class="urbar"><div class="urbar-fill" style="width:${fillPct}%;background:${urColor}"></div></div></div></td>
+      <td class="${pass}" style="font-size:10px">${statusStr}</td>`;
+    tbody.appendChild(tr);
+
+    const remedyColor=!c.active?"#64748b":c.remedy.level==="fail"?"#ef4444":c.remedy.level==="warn"?"#f59e0b":"#22c55e";
+    const detailTr=document.createElement("tr");
+    detailTr.id="check-detail-"+i;
+    detailTr.style.display="none";
+    detailTr.innerHTML=`<td colspan="6" style="background:#0b1120;padding:10px 14px;border-bottom:2px solid ${urColor}">
+      <div style="font-size:9px;color:var(--accent);margin-bottom:4px;letter-spacing:1px">CALCULATION</div>
+      <pre style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:10px;color:#cbd5e1;margin:0 0 8px">${c.active?(c.calc||"—"):"Check not active for the current inputs (relevant demand is zero) — add the corresponding load/force to activate this check."}</pre>
+      <div style="font-size:9px;color:var(--accent);margin-bottom:4px;letter-spacing:1px">SOLUTION / REMARK</div>
+      <div style="font-size:10.5px;color:${remedyColor}">${c.active?c.remedy.text:"—"}</div>
+    </td>`;
+    tbody.appendChild(detailTr);
+  });
+}
+
+// ── DRAWING ──
+const NS="http://www.w3.org/2000/svg";
+function se(tag,attrs,txt){const el=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(txt!==undefined)el.textContent=txt;return el;}
+function clearSVG(id){const s=document.getElementById(id);while(s.firstChild)s.removeChild(s.firstChild);return s;}
+function toX(x){return PAD+x/totalLen()*(W-2*PAD);}
+
+function drawBeam(){
+  const svg=clearSVG("svg-beam"),BY=92,BH=14,sc=getSupCond();
+  const{RA,RB}=calcReactions(),wu=getUDLu();
+  svg.appendChild(se("rect",{x:PAD,y:BY-BH/2,width:W-2*PAD,height:BH,rx:2,fill:"#334155",stroke:"#64748b","stroke-width":1.5}));
+  if(wu>0){
+    const n=Math.max(6,Math.floor((W-2*PAD)/20));
+    for(let i=0;i<=n;i++){const xp=PAD+i/n*(W-2*PAD);svg.appendChild(se("line",{x1:xp,y1:BY-BH/2-2,x2:xp,y2:BY-BH/2-28,stroke:"#f59e0b","stroke-width":1.5}));svg.appendChild(se("polygon",{points:`${xp},${BY-BH/2-2} ${xp-4},${BY-BH/2-12} ${xp+4},${BY-BH/2-12}`,fill:"#f59e0b"}));}
+    svg.appendChild(se("line",{x1:PAD,y1:BY-BH/2-28,x2:W-PAD,y2:BY-BH/2-28,stroke:"#f59e0b","stroke-width":2,"stroke-dasharray":"5,3"}));
+    svg.appendChild(se("text",{x:W/2,y:BY-BH/2-31,"text-anchor":"middle",fill:"#fde68a","font-size":9,"font-family":"monospace"},`w*=${wu.toFixed(1)} kN/m (factored)`));
+  }
+  pointLoads.forEach((ld,i)=>{
+    const xp=toX(ld.x),col=PLC[i%PLC.length],al=Math.min(50,30+ld.P/8);
+    svg.appendChild(se("line",{x1:xp,y1:BY-BH/2-al,x2:xp,y2:BY-BH/2-2,stroke:col,"stroke-width":2.5}));
+    svg.appendChild(se("polygon",{points:`${xp},${BY-BH/2-2} ${xp-5},${BY-BH/2-12} ${xp+5},${BY-BH/2-12}`,fill:col}));
+    svg.appendChild(se("rect",{x:xp-26,y:BY-BH/2-al-17,width:52,height:15,rx:3,fill:"#1e1b4b",stroke:col,"stroke-width":1}));
+    svg.appendChild(se("text",{x:xp,y:BY-BH/2-al-6,"text-anchor":"middle",fill:col,"font-size":9,"font-family":"monospace"},`P${i+1}=${ld.P}kN`));
+  });
+  const dY=BY+BH/2+28;
+  svg.appendChild(se("line",{x1:PAD,y1:dY,x2:W-PAD,y2:dY,stroke:"#475569","stroke-width":1}));
+  svg.appendChild(se("line",{x1:PAD,y1:dY-5,x2:PAD,y2:dY+5,stroke:"#475569","stroke-width":1}));
+  svg.appendChild(se("line",{x1:W-PAD,y1:dY-5,x2:W-PAD,y2:dY+5,stroke:"#475569","stroke-width":1}));
+  svg.appendChild(se("text",{x:W/2,y:dY+13,"text-anchor":"middle",fill:"#475569","font-size":9,"font-family":"monospace"},`L = ${L.toFixed(1)} m  [${document.getElementById("supCond").options[document.getElementById("supCond").selectedIndex].text}]`));
+  if(sc==="SS"){
+    svg.appendChild(se("polygon",{points:`${PAD},${BY+BH/2} ${PAD-12},${BY+BH/2+18} ${PAD+12},${BY+BH/2+18}`,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:PAD-14,y1:BY+BH/2+19,x2:PAD+14,y2:BY+BH/2+19,stroke:"#16a34a","stroke-width":2}));
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RA=${RA.toFixed(1)}kN↑`));
+    svg.appendChild(se("circle",{cx:W-PAD,cy:BY+BH/2+9,r:8,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:W-PAD-14,y1:BY+BH/2+18,x2:W-PAD+14,y2:BY+BH/2+18,stroke:"#16a34a","stroke-width":2}));
+    svg.appendChild(se("text",{x:W-PAD,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RB=${RB.toFixed(1)}kN↑`));
+  }else if(sc==="CANT"){
+    const wy=BY-BH/2-8;for(let i=0;i<6;i++)svg.appendChild(se("line",{x1:PAD-4,y1:wy+i*8,x2:PAD-18,y2:wy+i*8+10,stroke:"#94a3b8","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:PAD-4,y1:wy,x2:PAD-4,y2:wy+48,stroke:"#94a3b8","stroke-width":2}));
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#86efac","font-size":8},"FIXED"));
+    svg.appendChild(se("text",{x:W-PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#94a3b8","font-size":8},"FREE"));
+  }else if(sc==="FIXED"){
+    for(let p=0;p<2;p++){const xp=p===0?PAD:W-PAD,wy=BY-BH/2-8;for(let i=0;i<6;i++)svg.appendChild(se("line",{x1:xp+(p===0?-4:4),y1:wy+i*8,x2:xp+(p===0?-18:18),y2:wy+i*8+10,stroke:"#94a3b8","stroke-width":1.5}));svg.appendChild(se("line",{x1:xp+(p===0?-4:4),y1:wy,x2:xp+(p===0?-4:4),y2:wy+48,stroke:"#94a3b8","stroke-width":2}));}
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#86efac","font-size":8},`RA=${RA.toFixed(1)}kN↑`));
+    svg.appendChild(se("text",{x:W-PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#86efac","font-size":8},`RB=${RB.toFixed(1)}kN↑`));
+  }else if(sc==="PROPPED"){
+    const wy=BY-BH/2-8;for(let i=0;i<6;i++)svg.appendChild(se("line",{x1:PAD-4,y1:wy+i*8,x2:PAD-18,y2:wy+i*8+10,stroke:"#94a3b8","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:PAD-4,y1:wy,x2:PAD-4,y2:wy+48,stroke:"#94a3b8","stroke-width":2}));
+    svg.appendChild(se("circle",{cx:W-PAD,cy:BY+BH/2+9,r:8,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#86efac","font-size":8},"FIXED"));
+    svg.appendChild(se("text",{x:W-PAD,y:BY+BH/2+22,"text-anchor":"middle",fill:"#86efac","font-size":8},`RB=${RB.toFixed(1)}kN↑`));
+  }else if(sc==="OVERHANG"){
+    const xb=toX(L);
+    svg.appendChild(se("polygon",{points:`${PAD},${BY+BH/2} ${PAD-12},${BY+BH/2+18} ${PAD+12},${BY+BH/2+18}`,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:PAD-14,y1:BY+BH/2+19,x2:PAD+14,y2:BY+BH/2+19,stroke:"#16a34a","stroke-width":2}));
+    svg.appendChild(se("circle",{cx:xb,cy:BY+BH/2+9,r:8,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RA=${RA.toFixed(1)}kN↑`));
+    svg.appendChild(se("text",{x:xb,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RB=${RB.toFixed(1)}kN↑`));
+    svg.appendChild(se("rect",{x:xb,y:BY-BH/2,width:Math.max(2,toX(L+cOver)-xb),height:BH,rx:2,fill:"#1e3050",stroke:"#475569","stroke-width":1.5,"stroke-dasharray":"5,3"}));
+    svg.appendChild(se("text",{x:xb+30,y:BY-BH/2-6,"text-anchor":"middle",fill:"#64748b","font-size":8},`c=${cOver}m`));
+  }
+}
+
+function drawBMD(){
+  const svg=clearSVG("svg-bmd"),BY=78,N=300;
+  const vals=sample(bmFunc,N),maxV=Math.max(...vals.map(Math.abs),0.001),sc=58/maxV;
+  const defs=se("defs",{});const g=se("linearGradient",{id:"bmg",x1:0,y1:0,x2:0,y2:1});
+  g.appendChild(se("stop",{offset:"0%","stop-color":"#818cf8","stop-opacity":0.95}));
+  g.appendChild(se("stop",{offset:"100%","stop-color":"#4f46e5","stop-opacity":0.2}));
+  defs.appendChild(g);svg.appendChild(defs);
+  let d=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++)d+=` L${toX(i/N*L)},${BY-vals[i]*sc}`;d+=` L${toX(L)},${BY} Z`;
+  svg.appendChild(se("path",{d,fill:"url(#bmg)",stroke:"#818cf8","stroke-width":2}));
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5}));
+  const maxIdx=vals.indexOf(Math.max(...vals)),maxVal=vals[maxIdx];
+  if(Math.abs(maxVal)>0.01){const mx=toX(maxIdx/N*L),my=BY-maxVal*sc;svg.appendChild(se("line",{x1:mx,y1:my,x2:mx,y2:BY,stroke:"#c7d2fe","stroke-width":1,"stroke-dasharray":"3,2"}));svg.appendChild(se("rect",{x:mx-36,y:my-18,width:72,height:15,rx:3,fill:"#1e1b4b",stroke:"#818cf8","stroke-width":1}));svg.appendChild(se("text",{x:mx,y:my-7,"text-anchor":"middle",fill:"#c7d2fe","font-size":9,"font-family":"monospace"},`${maxVal.toFixed(1)} kN·m`));}
+  const minIdx=vals.indexOf(Math.min(...vals)),minVal=vals[minIdx];
+  if(minVal<-0.01){const mx=toX(minIdx/N*L),my=BY-minVal*sc;svg.appendChild(se("rect",{x:mx-36,y:my+4,width:72,height:15,rx:3,fill:"#1c0a0a",stroke:"#ef4444","stroke-width":1}));svg.appendChild(se("text",{x:mx,y:my+14,"text-anchor":"middle",fill:"#fca5a5","font-size":9,"font-family":"monospace"},`${minVal.toFixed(1)} kN·m`));}
+}
+
+function drawSFD(){
+  const svg=clearSVG("svg-sfd"),BY=65,N=300;
+  const vals=sample(sfFunc,N),maxV=Math.max(...vals.map(Math.abs),0.001),sc=48/maxV;
+  const defs=se("defs",{});
+  const gp=se("linearGradient",{id:"sfgp",x1:0,y1:0,x2:0,y2:1});gp.appendChild(se("stop",{offset:"0%","stop-color":"#34d399","stop-opacity":0.9}));gp.appendChild(se("stop",{offset:"100%","stop-color":"#059669","stop-opacity":0.1}));defs.appendChild(gp);
+  const gn=se("linearGradient",{id:"sfgn",x1:0,y1:0,x2:0,y2:1});gn.appendChild(se("stop",{offset:"0%","stop-color":"#f87171","stop-opacity":0.1}));gn.appendChild(se("stop",{offset:"100%","stop-color":"#ef4444","stop-opacity":0.9}));defs.appendChild(gn);
+  svg.appendChild(defs);
+  let dp=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++)dp+=` L${toX(i/N*L)},${BY-Math.max(0,vals[i])*sc}`;dp+=` L${toX(L)},${BY} Z`;
+  svg.appendChild(se("path",{d:dp,fill:"url(#sfgp)",stroke:"none"}));
+  let dn=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++)dn+=` L${toX(i/N*L)},${BY-Math.min(0,vals[i])*sc}`;dn+=` L${toX(L)},${BY} Z`;
+  svg.appendChild(se("path",{d:dn,fill:"url(#sfgn)",stroke:"none"}));
+  let dl=`M${toX(0)},${BY-vals[0]*sc}`;for(let i=1;i<=N;i++)dl+=` L${toX(i/N*L)},${BY-vals[i]*sc}`;
+  svg.appendChild(se("path",{d:dl,fill:"none",stroke:"#34d399","stroke-width":2}));
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5}));
+  svg.appendChild(se("rect",{x:PAD-2,y:BY-vals[0]*sc-16,width:52,height:14,rx:2,fill:"#0f172a",stroke:"#34d399","stroke-width":1}));
+  svg.appendChild(se("text",{x:PAD+24,y:BY-vals[0]*sc-6,"text-anchor":"middle",fill:"#6ee7b7","font-size":9,"font-family":"monospace"},`${vals[0].toFixed(1)}`));
+  svg.appendChild(se("rect",{x:W-PAD-50,y:BY-vals[N]*sc+4,width:52,height:14,rx:2,fill:"#0f172a",stroke:"#ef4444","stroke-width":1}));
+  svg.appendChild(se("text",{x:W-PAD-24,y:BY-vals[N]*sc+13,"text-anchor":"middle",fill:"#fca5a5","font-size":9,"font-family":"monospace"},`${vals[N].toFixed(1)}`));
+}
+
+function drawDEF(){
+  const svg=clearSVG("svg-def"),BY=35,N=300;
+  const delta_max=maxDeflection();
+  if(delta_max<0.001){svg.appendChild(se("text",{x:W/2,y:45,"text-anchor":"middle",fill:"var(--muted)","font-size":10,"font-family":"monospace"},"No service load deflection"));return;}
+  const scale=38/Math.max(delta_max,0.1);
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+  let dp=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++){const x=i/N*L;dp+=` L${toX(x)},${BY+defFunc(x)*scale}`;}dp+=` L${toX(L)},${BY} Z`;
+  const defs=se("defs",{});const gd=se("linearGradient",{id:"defg",x1:0,y1:0,x2:0,y2:1});
+  gd.appendChild(se("stop",{offset:"0%","stop-color":"#fb923c","stop-opacity":0.05}));
+  gd.appendChild(se("stop",{offset:"100%","stop-color":"#fb923c","stop-opacity":0.75}));
+  defs.appendChild(gd);svg.appendChild(defs);
+  svg.appendChild(se("path",{d:dp,fill:"url(#defg)",stroke:"#fb923c","stroke-width":2}));
+  const deflRatio=+document.getElementById("deflLimit").value||300,deflAllow=L*1000/deflRatio;
+  const deflColor=delta_max<=deflAllow?"#fb923c":"#ef4444",deflStatus=delta_max<=deflAllow?"✓ OK":"✗ EXCEEDS";
+  let maxDef=0,maxDefX=L/2;for(let i=0;i<=N;i++){const x=i/N*L,d=defFunc(x);if(d>maxDef){maxDef=d;maxDefX=x;}}
+  const lx=toX(maxDefX),ly=BY+maxDef*scale;
+  svg.appendChild(se("line",{x1:lx,y1:BY,x2:lx,y2:ly,stroke:deflColor,"stroke-width":1,"stroke-dasharray":"3,2"}));
+  svg.appendChild(se("rect",{x:lx-52,y:ly+3,width:104,height:26,rx:3,fill:"#0c0e14",stroke:deflColor,"stroke-width":1}));
+  svg.appendChild(se("text",{x:lx,y:ly+14,"text-anchor":"middle",fill:deflColor,"font-size":9,"font-family":"monospace"},`δmax = ${delta_max.toFixed(2)} mm  ${deflStatus}`));
+  svg.appendChild(se("text",{x:lx,y:ly+24,"text-anchor":"middle",fill:"#64748b","font-size":8,"font-family":"monospace"},`Allow = ${deflAllow.toFixed(1)} mm = L/${deflRatio}`));
+}
+
+function renderPLControls(){
+  const c=document.getElementById("pl-list");c.innerHTML="";
+  pointLoads.forEach((ld,i)=>{
+    const col=PLC[i%PLC.length],pPct=((ld.P-5)/495*100).toFixed(1),xPct=(Math.max(0,Math.min(ld.x,L-0.1)-0.1)/(L-0.2)*100).toFixed(1);
+    const d=document.createElement("div");d.className="load-block";d.style.borderColor=col+"55";
+    d.innerHTML=`<div class="load-hdr"><span class="load-title" style="color:${col}">P${i+1} — Point Load</span><button class="btn-x" onclick="removePL(${i})">✕</button></div>
+      <div class="sl-row"><span class="sl-label">P${i+1}</span><span class="sl-val" id="vlP${i}" style="color:${col}">${ld.P} kN</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="slP${i}" min="5" max="500" step="5" value="${ld.P}" style="flex:1;background:linear-gradient(to right,${col} 0%,${col} ${pPct}%,#334155 ${pPct}%,#334155 100%)" oninput="document.getElementById('numP${i}').value=this.value;updP(${i},this.value)">
+        <input type="number" id="numP${i}" min="0" step="1" value="${ld.P}" style="width:64px" oninput="extendRange('slP${i}',this.value);updP(${i},this.value)">
+      </div>
+      <div class="sl-row"><span class="sl-label">Position from A</span><span class="sl-val" id="vlA${i}" style="color:${col}">${ld.x.toFixed(1)} m</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="slA${i}" min="0.1" max="${(L-0.1).toFixed(1)}" step="0.1" value="${Math.min(ld.x,L-0.1).toFixed(1)}" style="flex:1;background:linear-gradient(to right,${col} 0%,${col} ${xPct}%,#334155 ${xPct}%,#334155 100%)" oninput="document.getElementById('numA${i}').value=this.value;updA(${i},this.value)">
+        <input type="number" id="numA${i}" min="0" max="${(L-0.1).toFixed(1)}" step="0.1" value="${Math.min(ld.x,L-0.1).toFixed(1)}" style="width:64px" oninput="updA(${i},this.value)">
+      </div>`;
+    c.appendChild(d);
+  });
+  document.getElementById("btn-add-pl").style.display=pointLoads.length>=5?"none":"block";
+}
+function updP(i,v){v=+v;if(v<0)v=0;pointLoads[i].P=v;document.getElementById("vlP"+i).textContent=v+" kN";const el=document.getElementById("slP"+i);extendRange("slP"+i,v);const mn=+el.min,mx=+el.max,pct=(mx>mn?((v-mn)/(mx-mn)*100):0).toFixed(1);el.style.background=`linear-gradient(to right,${PLC[i%PLC.length]} 0%,${PLC[i%PLC.length]} ${pct}%,#334155 ${pct}%,#334155 100%)`;updateAll();}
+function updA(i,v){v=+v;if(v<0)v=0;if(v>L-0.05)v=Math.max(0,L-0.05);pointLoads[i].x=v;document.getElementById("vlA"+i).textContent=v.toFixed(1)+" m";const el=document.getElementById("slA"+i);const mn=+el.min,mx=+el.max,pct=(mx>mn?((v-mn)/(mx-mn)*100):0).toFixed(1);el.style.background=`linear-gradient(to right,${PLC[i%PLC.length]} 0%,${PLC[i%PLC.length]} ${pct}%,#334155 ${pct}%,#334155 100%)`;updateAll();}
+function addPL(){if(pointLoads.length<5){pointLoads.push({P:50,x:+(L/2).toFixed(1)});renderPLControls();updateAll();}}
+function removePL(i){pointLoads.splice(i,1);renderPLControls();updateAll();}
+
+// ── HORIZONTAL POINT LOADS (mirrors the vertical point-load controls above) ──
+function renderPLControlsH(){
+  const c=document.getElementById("pl-list-h");c.innerHTML="";
+  pointLoadsH.forEach((ld,i)=>{
+    const col=PLC[i%PLC.length],pPct=((ld.P-5)/195*100).toFixed(1),xPct=(Math.max(0,Math.min(ld.x,L-0.1)-0.1)/(L-0.2)*100).toFixed(1);
+    const d=document.createElement("div");d.className="load-block";d.style.borderColor=col+"55";
+    d.innerHTML=`<div class="load-hdr"><span class="load-title" style="color:${col}">H${i+1} — Horiz. Point Load</span><button class="btn-x" onclick="removePLH(${i})">✕</button></div>
+      <div class="sl-row"><span class="sl-label">H${i+1}</span><span class="sl-val" id="vlHP${i}" style="color:${col}">${ld.P} kN</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="slHP${i}" min="1" max="200" step="1" value="${ld.P}" style="flex:1;background:linear-gradient(to right,${col} 0%,${col} ${pPct}%,#334155 ${pPct}%,#334155 100%)" oninput="document.getElementById('numHP${i}').value=this.value;updPH(${i},this.value)">
+        <input type="number" id="numHP${i}" min="0" step="1" value="${ld.P}" style="width:64px" oninput="extendRange('slHP${i}',this.value);updPH(${i},this.value)">
+      </div>
+      <div class="sl-row"><span class="sl-label">Position from A</span><span class="sl-val" id="vlHA${i}" style="color:${col}">${ld.x.toFixed(1)} m</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="slHA${i}" min="0.1" max="${(L-0.1).toFixed(1)}" step="0.1" value="${Math.min(ld.x,L-0.1).toFixed(1)}" style="flex:1;background:linear-gradient(to right,${col} 0%,${col} ${xPct}%,#334155 ${xPct}%,#334155 100%)" oninput="document.getElementById('numHA${i}').value=this.value;updAH(${i},this.value)">
+        <input type="number" id="numHA${i}" min="0" max="${(L-0.1).toFixed(1)}" step="0.1" value="${Math.min(ld.x,L-0.1).toFixed(1)}" style="width:64px" oninput="updAH(${i},this.value)">
+      </div>`;
+    c.appendChild(d);
+  });
+  document.getElementById("btn-add-plh").style.display=pointLoadsH.length>=5?"none":"block";
+}
+function updPH(i,v){v=+v;if(v<0)v=0;pointLoadsH[i].P=v;document.getElementById("vlHP"+i).textContent=v+" kN";extendRange("slHP"+i,v);updateAll();}
+function updAH(i,v){v=+v;if(v<0)v=0;if(v>L-0.05)v=Math.max(0,L-0.05);pointLoadsH[i].x=v;document.getElementById("vlHA"+i).textContent=v.toFixed(1)+" m";updateAll();}
+function addPLH(){if(pointLoadsH.length<5){pointLoadsH.push({P:20,x:+(L/2).toFixed(1)});renderPLControlsH();updateAll();}}
+function removePLH(i){pointLoadsH.splice(i,1);renderPLControlsH();updateAll();}
+
+function toggleBMD(){showBMD=!showBMD;document.getElementById("bmd-card").style.display=showBMD?"block":"none";const btn=document.getElementById("btog-bmd");btn.textContent=`BMD ${showBMD?"✓":"○"}`;btn.style.background=showBMD?"#1e1b4b":"transparent";btn.style.color=showBMD?"#a5b4fc":"#64748b";btn.style.borderColor=showBMD?"#818cf8":"var(--dim)";}
+
+// ── SAVE / LOAD DESIGN (stored right here in the browser) ──
+const SAVE_KEY="is800_saved_designs_v1";
+function getSavedDesigns(){try{return JSON.parse(localStorage.getItem(SAVE_KEY))||[];}catch(e){return[];}}
+function setSavedDesigns(arr){try{localStorage.setItem(SAVE_KEY,JSON.stringify(arr));}catch(e){alert("Could not save — browser storage may be full or disabled.");}}
+function collectDesignData(){
+  const data={inputs:{},pointLoads,activeLoads,cOver};
+  document.querySelectorAll("select[id],input[id]").forEach(el=>{
+    if(el.id==="loadFileInput"||el.id==="designNameInput")return;
+    data.inputs[el.id]=el.value;
+  });
+  return data;
+}
+function applyDesignData(data){
+  const inputs=data.inputs||{};
+  if(inputs.secFamily!==undefined){document.getElementById("secFamily").value=inputs.secFamily;onFamilyChange();}
+  Object.entries(inputs).forEach(([id,val])=>{
+    const el=document.getElementById(id);
+    if(el&&id!=="secFamily")el.value=val;
+  });
+  ["inp-KyL","inp-KzL","inp-LLT"].forEach(id=>{const el=document.getElementById(id);if(el)el.dataset.userEdited="1";});
+  if(Array.isArray(data.pointLoads))pointLoads=data.pointLoads;
+  if(data.activeLoads){
+    activeLoads=data.activeLoads;
+    ["DL","LL","WL"].forEach(id=>{
+      const on=!!activeLoads[id],col=id==="DL"?"#94a3b8":id==="LL"?"#f59e0b":"#38bdf8";
+      document.getElementById("sw-"+id).style.background=on?col:"var(--dim)";
+      document.getElementById("kn-"+id).style.left=on?"16px":"2px";
+      document.getElementById("ctrl-"+id).style.display=on?"block":"none";
+    });
+  }
+  if(typeof data.cOver==="number")cOver=data.cOver;
+  onSectionChange();
+}
+function saveDesignNamed(){
+  const nameInput=document.getElementById("designNameInput");
+  let name=nameInput.value.trim();
+  if(!name)name=`Design ${new Date().toLocaleString()}`;
+  const list=getSavedDesigns();
+  const data=collectDesignData();
+  const existingIdx=list.findIndex(d=>d.name===name);
+  const entry={name,ts:Date.now(),data};
+  if(existingIdx>=0){
+    if(!confirm(`"${name}" already exists here. Overwrite it?`))return;
+    list[existingIdx]=entry;
+  }else list.unshift(entry);
+  setSavedDesigns(list);
+  nameInput.value="";
+  renderSavedDesigns();
+}
+function renderSavedDesigns(){
+  const c=document.getElementById("saved-designs-list");
+  const list=getSavedDesigns();
+  if(list.length===0){c.innerHTML=`<div style="font-size:10px;color:var(--muted)">No saved designs yet — type a name above and click SAVE HERE.</div>`;return;}
+  c.innerHTML=list.map((d,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#0b1120;border:1px solid var(--dim);border-radius:5px;padding:6px 10px">
+      <div>
+        <div style="font-size:11px;color:var(--text)">${d.name}</div>
+        <div style="font-size:9px;color:var(--muted)">${new Date(d.ts).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="loadSavedDesign(${i})" style="background:transparent;border:1px solid var(--green);color:var(--green);padding:3px 10px;border-radius:4px;font-size:9px;cursor:pointer">LOAD</button>
+        <button onclick="deleteSavedDesign(${i})" style="background:transparent;border:1px solid var(--red);color:var(--red);padding:3px 10px;border-radius:4px;font-size:9px;cursor:pointer">DELETE</button>
+      </div>
+    </div>`).join("");
+}
+function loadSavedDesign(i){
+  const list=getSavedDesigns();
+  const entry=list[i];
+  if(!entry)return;
+  applyDesignData(entry.data);
+  alert(`Loaded "${entry.name}".`);
+}
+function deleteSavedDesign(i){
+  const list=getSavedDesigns();
+  const entry=list[i];
+  if(!entry)return;
+  if(!confirm(`Delete "${entry.name}"?`))return;
+  list.splice(i,1);
+  setSavedDesigns(list);
+  renderSavedDesigns();
+}
+function exportDesignFile(){
+  const data=collectDesignData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const secEl=document.getElementById("secDesig");
+  const tag=(secEl&&secEl.value?secEl.value:"design").replace(/\s+/g,"_");
+  a.href=url;a.download=`IS800_Design_${tag}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+}
+function loadDesign(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      applyDesignData(data);
+      alert("Design imported successfully.");
+    }catch(err){
+      alert("Could not load this file — it doesn't look like a valid saved design (JSON).");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value="";
+}
+
+// ── PDF REPORT ──
+function svgToInlineString(id){
+  const el=document.getElementById(id);
+  if(!el)return "";
+  const clone=el.cloneNode(true);
+  clone.removeAttribute("height");
+  return clone.outerHTML;
+}
+function generatePDFReport(){
+  if(!currentSec){alert("Select a steel section first.");return;}
+  const sc=getSupCond(),supText=document.getElementById("supCond").options[document.getElementById("supCond").selectedIndex].text;
+  const {RA,RB}=calcReactions(),wu=getUDLu();
+  const checks=runDesignChecks();
+  const bmVals=sample(bmFunc),sfVals=sample(sfFunc);
+  const Mu=Math.max(...bmVals.map(Math.abs)),Vu=Math.max(...sfVals.map(Math.abs));
+  const dmax=maxDeflection(),deflRatio=+document.getElementById("deflLimit").value||300,deflAllow=L*1000/deflRatio;
+  const rows=checks.map(c=>{
+    const ur=c.active?c.ur:null;
+    const urStr=ur!==null?ur.toFixed(3):"N/A";
+    const statusStr=ur===null?"N/A":ur<=0.001?"N/L":ur<=0.75?"PASS":ur<=1.0?"PASS (near limit)":"FAIL";
+    const cls=ur===null?"":ur>1?"rpt-fail":ur>0.75?"rpt-warn":"rpt-pass";
+    return `<tr><td>${c.name}</td><td>${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td><td>${urStr}</td><td class="${cls}">${statusStr}</td></tr>`;
+  }).join("");
+  const details=checks.map(c=>{
+    const remedyColor=!c.active?"#777":c.remedy.level==="fail"?"#c0392b":c.remedy.level==="warn"?"#b8860b":"#0a7a0a";
+    return `<div style="margin-bottom:10px;border:1px solid #ccc;border-radius:4px;padding:6px 10px">
+      <b>${c.name}</b> <span style="color:#777">(${c.clause})</span>
+      <pre style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:9.5px;margin:4px 0;color:#333">${c.active?(c.calc||"—"):"Not active for current inputs."}</pre>
+      <div style="font-size:10px;color:${remedyColor}"><b>Solution/Remark:</b> ${c.active?c.remedy.text:"—"}</div>
+    </div>`;
+  }).join("");
+  const loadsSummary=[
+    activeLoads.DL?`DL = ${(+document.getElementById("sl-wDL").value).toFixed(1)} kN/m`:null,
+    activeLoads.LL?`LL = ${(+document.getElementById("sl-wLL").value).toFixed(1)} kN/m`:null,
+    activeLoads.WL?`WL = ${(+document.getElementById("sl-wWL").value).toFixed(1)} kN/m`:null,
+    ...pointLoads.map((p,i)=>`P${i+1} = ${p.P} kN @ ${p.x.toFixed(2)} m from A`)
+  ].filter(Boolean).join(" &nbsp;|&nbsp; ")||"No loads active";
+  const html=`
+    <h2>IS 800:2007 — Steel Member Design Report</h2>
+    <div class="rpt-grid">
+      <div><b>Generated:</b> ${new Date().toLocaleString()}</div>
+      <div><b>Section:</b> ${currentSec.name}</div>
+      <div><b>Support Condition:</b> ${supText}</div>
+      <div><b>Span L:</b> ${L.toFixed(2)} m${sc==="OVERHANG"?` (+ overhang c = ${cOver} m)`:""}</div>
+      <div><b>Steel Grade:</b> Fe ${document.getElementById("steelGrade").value}</div>
+      <div><b>Member Type:</b> ${document.getElementById("memberType").options[document.getElementById("memberType").selectedIndex].text}</div>
+    </div>
+    <h3>Applied Loads</h3>
+    <div style="font-size:11px;margin-bottom:8px">${loadsSummary}</div>
+    <h3>Reactions &amp; Factored Actions</h3>
+    <table><tr><th>RA</th><th>RB</th><th>w* (factored UDL)</th><th>Mu (max)</th><th>Vu (max)</th><th>δ (service)</th></tr>
+      <tr><td>${RA.toFixed(2)} kN</td><td>${RB.toFixed(2)} kN</td><td>${wu.toFixed(2)} kN/m</td><td>${Mu.toFixed(2)} kN·m</td><td>${Vu.toFixed(2)} kN</td><td>${dmax.toFixed(2)} mm (allow ${deflAllow.toFixed(1)} mm, L/${deflRatio})</td></tr>
+    </table>
+    <h3>Beam &amp; Diagrams</h3>
+    ${svgToInlineString("svg-beam")}
+    ${svgToInlineString("svg-bmd")}
+    ${svgToInlineString("svg-sfd")}
+    ${svgToInlineString("svg-def")}
+    <h3>IS 800:2007 Design Checks — Summary</h3>
+    <table><tr><th>Check</th><th>Clause</th><th>Demand</th><th>Capacity</th><th>UR</th><th>Status</th></tr>${rows}</table>
+    <h3>Full Calculation &amp; Solution for Every Check</h3>
+    ${details}
+    <div class="rpt-foot">Generated by IS 800 Steel Member Design Tool · For preliminary design use only — verify with a qualified structural engineer before construction.</div>
+  `;
+  document.getElementById("print-report").innerHTML=html;
+  window.print();
+}
+
+function toggleSFD(){showSFD=!showSFD;document.getElementById("sfd-card").style.display=showSFD?"block":"none";const btn=document.getElementById("btog-sfd");btn.textContent=`SFD ${showSFD?"✓":"○"}`;btn.style.background=showSFD?"#052e16":"transparent";btn.style.color=showSFD?"#6ee7b7":"#64748b";btn.style.borderColor=showSFD?"#34d399":"var(--dim)";}
+function toggleDEF(){showDEF=!showDEF;document.getElementById("def-card").style.display=showDEF?"block":"none";const btn=document.getElementById("btog-def");btn.textContent=`DEF ${showDEF?"✓":"○"}`;btn.style.background=showDEF?"#1c1008":"transparent";btn.style.color=showDEF?"#fb923c":"#64748b";btn.style.borderColor=showDEF?"#fb923c":"var(--dim)";}
+
+function updateAll(){
+  const slL=document.getElementById("sl-L"),numL=document.getElementById("num-L");
+  L=+numL.value||+slL.value;
+  if(L<=0)L=0.1;
+  if(+slL.value!==L)extendRange("sl-L",L);
+  if(+numL.value!==L)numL.value=L;
+  document.getElementById("val-L").textContent=L.toFixed(2)+" m";
+  const lmin=+slL.min,lmax=+slL.max,pct=(((L-lmin)/(lmax-lmin))*100).toFixed(1);
+  slL.style.background=`linear-gradient(to right,#38bdf8 0%,#38bdf8 ${pct}%,#334155 ${pct}%,#334155 100%)`;
+  const sc=getSupCond();
+  document.getElementById("overhang-row").style.display=sc==="OVERHANG"?"block":"none";
+  cOver=+document.getElementById("inp-c").value||1.5;
+  ["inp-KyL","inp-KzL","inp-LLT"].forEach(id=>{const el=document.getElementById(id);if(!el.dataset.userEdited)el.value=L.toFixed(1);});
+  pointLoads=pointLoads.map(ld=>({...ld,x:Math.min(ld.x,L-0.1)}));
+  renderPLControls();
+  ["wDL","wLL","wWL"].forEach(id=>{
+    if(activeLoads[id.replace("w","")]){
+      const sl=document.getElementById("sl-"+id),num=document.getElementById("num-"+id);
+      let v=+num.value;
+      if(isNaN(v))v=+sl.value;
+      if(v<0)v=0;
+      if(+sl.value!==v)extendRange("sl-"+id,v);
+      if(+num.value!==v)num.value=v;
+      const col=id==="wDL"?"#94a3b8":id==="wLL"?"#f59e0b":"#38bdf8";
+      const mn=+sl.min,mx=+sl.max,p=(mx>mn?((v-mn)/(mx-mn)*100):0).toFixed(1);
+      sl.style.background=`linear-gradient(to right,${col} 0%,${col} ${p}%,#334155 ${p}%,#334155 100%)`;
+      document.getElementById("val-"+id).textContent=v+" kN/m";
+    }
+  });
+  drawBeam();if(showBMD)drawBMD();if(showSFD)drawSFD();if(showDEF)drawDEF();
+  const{RA,RB}=calcReactions();
+  const bmVals=sample(bmFunc),sfVals=sample(sfFunc);
+  document.getElementById("cr-RA").textContent=RA.toFixed(1);
+  document.getElementById("cr-RB").textContent=RB.toFixed(1);
+  document.getElementById("cr-BM").textContent=Math.max(...bmVals.map(Math.abs)).toFixed(2);
+  document.getElementById("cr-SF").textContent=Math.max(...sfVals.map(Math.abs)).toFixed(1);
+  document.getElementById("cr-DEF").textContent=maxDeflection().toFixed(2);
+  if(currentSec)runDesignChecks();
+}
+
+["inp-KyL","inp-KzL","inp-LLT"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",function(){this.dataset.userEdited="1";updateAll();});
+});
+
+populateDesig("ISMB");
+onSectionChange();
+toggleLoad("LL");
+renderPLControls();
+renderPLControlsH();
+updateAll();
+renderSavedDesigns();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+
+<!-- ═══ LOGIN / TRIAL / SUBSCRIPTION GATE ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+</body>
+</html>
