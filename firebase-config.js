@@ -17,12 +17,14 @@ const ADMIN_EMAIL = "mohittyagi3032mt@gmail.com";
 const FREE_TRIAL_USES = 3;
 const RAZORPAY_KEY_ID = "rzp_test_TIopl8H5MLjfrc"; // kept for reference; not used by Payment Links flow
 const PAYMENT_LINKS = {
+  oneDayTrial: "PASTE_DAILY_LIVE_LINK_HERE",
   monthly: "https://rzp.io/rzp/vfoUcn75",
   yearly: "https://rzp.io/rzp/ChJUd4Sm"
 };
 const UPI_ID = "8979463032@ptsbi";
 const SUPPORT_WHATSAPP = "919354115166"; // country code + number, no + or spaces (used for wa.me link)
 const PLAN_PRICES = {
+  oneDayTrial: { amount: 100, label: "1-Day Trial (one-time only)", days: 1 },  // amount in paise (₹1)
   monthly: { amount: 29900, label: "Monthly", days: 30 },   // amount in paise (₹299)
   yearly:  { amount: 299900, label: "Yearly", days: 365 }   // amount in paise (₹2999)
 };
