@@ -32,3 +32,25 @@ const PLAN_PRICES = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// Shared helper: create the Firestore profile doc for a user if it doesn't
+// already exist yet (used by both email/password signup and Google sign-in).
+async function ensureUserDoc(user, extra){
+  const ref = db.collection("users").doc(user.uid);
+  const snap = await ref.get();
+  if(!snap.exists){
+    await ref.set(Object.assign({
+      email: user.email,
+      phone: null,
+      phoneVerified: false,
+      usageCount: 0,
+      plan: "trial",
+      subscriptionExpiry: null,
+      dailyTrialUsed: false,
+      isAdmin: (user.email||"").toLowerCase()===ADMIN_EMAIL.toLowerCase(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, extra||{}));
+  }
+  return ref;
+}
