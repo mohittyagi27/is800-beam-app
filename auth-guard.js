@@ -3,6 +3,12 @@
 // the free-trial (3 uses) + paid subscription (monthly/yearly) gate.
 // ═══════════════════════════════════════════════════════════════
 
+window.deferredInstallPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  window.deferredInstallPrompt=e;
+});
+
 let CURRENT_UID=null, CURRENT_USER_DATA=null;
 
 function ov(html){document.getElementById("auth-overlay").innerHTML=html;document.getElementById("auth-overlay").style.display="flex";}
@@ -69,19 +75,24 @@ function injectTopBar(email,usesLeft,isActive,isAdmin){
     :`<span style="color:#f59e0b">${usesLeft} free use${usesLeft===1?"":"s"} left</span>`;
   bar.innerHTML=`👤 ${email} &nbsp;·&nbsp; ${statusTxt} &nbsp;·&nbsp;
     <a href="help.html" style="color:#38bdf8;text-decoration:none">❓ Help</a> &nbsp;·&nbsp;
+    <a href="feedback.html" style="color:#38bdf8;text-decoration:none">💬 Feedback</a> &nbsp;·&nbsp;
+    <button id="installBtn" style="background:#052e16;border:1px solid #22c55e;color:#6ee7b7;padding:3px 10px;border-radius:12px;font-size:9px;cursor:pointer;font-family:'Courier New',monospace">⬇ Install App</button> &nbsp;·&nbsp;
     ${isAdmin?`<a href="admin.html" style="color:#38bdf8;text-decoration:none">Admin Panel</a> &nbsp;·&nbsp;`:""}
     <a href="#" id="logoutLink" style="color:#ef4444;text-decoration:none">Logout</a>`;
   document.getElementById("logoutLink").onclick=(e)=>{e.preventDefault();auth.signOut().then(()=>location.href="login.html");};
+  document.getElementById("installBtn").onclick=()=>{
+    if(window.deferredInstallPrompt){
+      window.deferredInstallPrompt.prompt();
+    }else{
+      alert("Is browser mein automatic install available nahi hai.\n\nAndroid Chrome: top-right menu (⋮) → 'Add to Home screen'\niPhone Safari: Share button (□↑) → 'Add to Home Screen'");
+    }
+  };
 }
 
 async function refreshUserDataAndGate(){
+  await ensureUserDoc(auth.currentUser);
   const docRef=db.collection("users").doc(CURRENT_UID);
   const snap=await docRef.get();
-  if(!snap.exists){
-    // Safety net: doc missing (e.g. old account) — create it.
-    await docRef.set({email:auth.currentUser.email,usageCount:0,plan:"trial",subscriptionExpiry:null,isAdmin:auth.currentUser.email.toLowerCase()===ADMIN_EMAIL.toLowerCase(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    return refreshUserDataAndGate();
-  }
   const d=snap.data();
   CURRENT_USER_DATA=d;
   const active=isSubscriptionActive(d);
@@ -114,7 +125,7 @@ async function consumeOneUse(){
 // ── Boot sequence ──
 showLoading("CHECKING LOGIN...");
 auth.onAuthStateChanged(async user=>{
-  if(!user){window.location.href="login.html";return;}
+  if(!user){window.location.href="signup.html";return;}
   CURRENT_UID=user.uid;
   showLoading("LOADING ACCOUNT...");
   await refreshUserDataAndGate();
