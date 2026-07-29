@@ -53,19 +53,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <label data-i18n="confirm_password_label">Confirm Password</label>
   <input type="password" id="password2" placeholder="••••••••">
 
-  <label data-i18n="phone_label">Phone Number (optional but recommended)</label>
+  <label data-i18n="phone_label">Phone Number (optional)</label>
   <div class="phone-row">
     <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
     <input type="tel" id="phoneNumber" placeholder="9876543210">
   </div>
-  <button type="button" class="btn-outline" onclick="sendSignupOtp()" id="btnSendOtp" data-i18n="send_otp">Send OTP</button>
-  <div id="otp-signup-box" class="hidden">
-    <label data-i18n="otp_label">Enter OTP</label>
-    <input type="text" id="otpSignupInput" placeholder="123456">
-    <button type="button" class="btn-outline" onclick="verifySignupOtp()" data-i18n="verify_otp">Verify OTP</button>
-  </div>
-  <div id="phone-verified-tag" class="hidden" style="color:var(--green);font-size:11px;margin-top:8px" data-i18n="phone_verified">✓ Phone verified</div>
-  <div id="recaptcha-container-su"></div>
+  <div style="font-size:9px;color:#64748b;margin-top:4px">OTP verification abhi available nahi hai — phone number sirf record ke liye save hota hai.</div>
 
   <button id="btnSignup" onclick="doSignup()" data-i18n="signup_btn">SIGN UP — 3 FREE CALCULATIONS</button>
   <div class="msg" id="msg"></div>
@@ -87,46 +80,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <script>
 function setMsg(text,cls){const m=document.getElementById("msg");m.textContent=text;m.className="msg "+(cls||"");}
 
-let verifiedPhone=null;
-let signupConfirmationResult=null;
-
-function sendSignupOtp(){
-  const code=document.getElementById("phoneCode").value.trim();
-  const num=document.getElementById("phoneNumber").value.trim();
-  if(!num){setMsg("Phone number daalo (ya ise khali chhodkar seedha sign up karo).","err");return;}
-  const full=code+num;
-  try{
-    window.signupRecaptcha=new firebase.auth.RecaptchaVerifier("recaptcha-container-su",{size:"normal"});
-    auth.signInWithPhoneNumber(full,window.signupRecaptcha).then(res=>{
-      signupConfirmationResult=res;
-      document.getElementById("otp-signup-box").classList.remove("hidden");
-      setMsg("OTP bhej diya gaya hai.","ok");
-    }).catch(e=>{ setMsg("OTP bhejne mein error: "+(e.message||""),"err"); });
-  }catch(e){ setMsg("Error: "+(e.message||""),"err"); }
-}
-
-async function verifySignupOtp(){
-  const otp=document.getElementById("otpSignupInput").value.trim();
-  if(!signupConfirmationResult){setMsg("Pehle OTP bhejo.","err");return;}
-  try{
-    const cred=await signupConfirmationResult.confirm(otp);
-    verifiedPhone=document.getElementById("phoneCode").value.trim()+document.getElementById("phoneNumber").value.trim();
-    // This temporarily signs in via phone — sign back out so the real
-    // email/password account creation below isn't affected.
-    await auth.signOut();
-    document.getElementById("phone-verified-tag").classList.remove("hidden");
-    document.getElementById("btnSendOtp").disabled=true;
-    setMsg("Phone verify ho gaya! Ab neeche email/password se signup complete karo.","ok");
-  }catch(e){
-    setMsg("OTP galat hai.","err");
-  }
-}
-
 async function doGoogleSignup(){
   setMsg("Google ke sath sign up ho raha hai...","");
   try{
     const cred=await auth.signInWithPopup(googleProvider);
-    await ensureUserDoc(cred.user, verifiedPhone?{phone:verifiedPhone,phoneVerified:true}:{});
+    const phone=document.getElementById("phoneNumber").value.trim();
+    const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
+    await ensureUserDoc(cred.user, extra);
     window.location.href="index.html";
   }catch(e){
     setMsg("Google sign-up fail hua: "+(e.message||""),"err");
@@ -144,7 +104,9 @@ async function doSignup(){
   btn.disabled=true;setMsg("Account ban raha hai...","");
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pw);
-    await ensureUserDoc(cred.user, verifiedPhone?{phone:verifiedPhone,phoneVerified:true}:{});
+    const phone=document.getElementById("phoneNumber").value.trim();
+    const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
+    await ensureUserDoc(cred.user, extra);
     // Do NOT auto-login the user into the app — sign them out and show a
     // clear "account created" confirmation, then send them to the login page.
     await auth.signOut();
