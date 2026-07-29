@@ -12,10 +12,13 @@ function isSubscriptionActive(d){
   if(!d)return false;
   if(!d.subscriptionExpiry)return false;
   const expiryMs=d.subscriptionExpiry.toMillis?d.subscriptionExpiry.toMillis():new Date(d.subscriptionExpiry).getTime();
-  return (d.plan==="monthly"||d.plan==="yearly") && expiryMs>Date.now();
+  return (d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly") && expiryMs>Date.now();
 }
 
-function showPaywall(){
+function showPaywall(dailyTrialUsed){
+  const dailyBtn = dailyTrialUsed
+    ? `<div style="width:100%;padding:11px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;margin-bottom:8px;box-sizing:border-box">✓ 1-Day Trial already used (one-time only)</div>`
+    : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:11px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">TRY 1 DAY — ₹1 (one-time only)</a>`;
   ov(`
     <div style="max-width:380px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:26px;text-align:center">
       <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">🔒 FREE TRIAL KHATAM</div>
@@ -24,22 +27,25 @@ function showPaywall(){
         Aage use karne ke liye subscribe karo.
       </div>
 
-      <div style="background:#0b1120;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:11px;color:#e2e8f0;margin-bottom:10px">
-          <b style="color:#38bdf8">Monthly:</b> ₹299 &nbsp;|&nbsp; <b style="color:#f59e0b">Yearly:</b> ₹2999
-        </div>
-        <div style="font-size:10px;color:#94a3b8;margin-bottom:8px">Is UPI ID par payment karo:</div>
-        <div style="font-size:15px;color:#22c55e;font-weight:bold;letter-spacing:1px;user-select:all;background:#052e16;border-radius:6px;padding:8px;margin-bottom:10px">
-          ${UPI_ID}
-        </div>
-        <div style="font-size:9px;color:#64748b;line-height:1.6">
-          Payment ke baad apna <b style="color:#94a3b8">email</b> aur <b style="color:#94a3b8">payment screenshot</b> yahan bhejo:<br>
-          <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">WhatsApp: +91 ${SUPPORT_WHATSAPP.slice(2)}</a><br>
-          Access thodi der mein (admin verify karke) activate ho jayega.
-        </div>
+      ${dailyBtn}
+      <a href="${PAYMENT_LINKS.monthly}" target="_blank" style="display:block;width:100%;padding:11px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">
+        MONTHLY — ₹299/month
+      </a>
+      <a href="${PAYMENT_LINKS.yearly}" target="_blank" style="display:block;width:100%;padding:11px;background:#f59e0b;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:16px">
+        YEARLY — ₹2999/year
+      </a>
+
+      <div style="font-size:9px;color:#64748b;line-height:1.6;border-top:1px solid #1e3050;padding-top:12px">
+        Payment ke baad apna <b style="color:#94a3b8">email</b> aur <b style="color:#94a3b8">payment screenshot</b> WhatsApp par bhejo:<br>
+        <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">WhatsApp: +91 ${SUPPORT_WHATSAPP.slice(2)}</a><br>
+        Access thodi der mein (admin verify karke) activate ho jayega.
       </div>
 
-      <div style="font-size:10px;color:#64748b">
+      <div style="font-size:9px;color:#64748b;margin-top:10px">
+        Ya seedha UPI se bhi bhej sakte ho: <span style="color:#22c55e;font-weight:bold;user-select:all">${UPI_ID}</span>
+      </div>
+
+      <div style="font-size:10px;color:#64748b;margin-top:16px">
         <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">Logout</a>
       </div>
     </div>
@@ -84,7 +90,7 @@ async function refreshUserDataAndGate(){
   if(d.isAdmin||active||usesLeft>0){
     hideOverlay();
   }else{
-    showPaywall();
+    showPaywall(!!d.dailyTrialUsed);
   }
   return{active,usesLeft,isAdmin:d.isAdmin};
 }
@@ -93,7 +99,7 @@ async function consumeOneUse(){
   if(!CURRENT_UID)return false;
   const status=await refreshUserDataAndGate();
   if(status.isAdmin||status.active)return true; // unlimited, don't touch counter
-  if(status.usesLeft<=0){showPaywall();return false;}
+  if(status.usesLeft<=0){showPaywall(!!CURRENT_USER_DATA?.dailyTrialUsed);return false;}
   await db.collection("users").doc(CURRENT_UID).update({usageCount:firebase.firestore.FieldValue.increment(1)});
   await refreshUserDataAndGate();
   return true;
