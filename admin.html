@@ -90,7 +90,7 @@ async function loadUsers(){
   snap.forEach(doc=>{
     const d=doc.data(),id=doc.id;
     const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
-    const isActive=(d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
+    const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
     const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
     let statusKey,statusBadge;
     if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
@@ -99,6 +99,7 @@ async function loadUsers(){
     else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
     ALL_USERS.push({id,email:d.email,usageCount:d.usageCount||0,plan:d.plan||"trial",
       expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
+      dailyTrialUsed:!!d.dailyTrialUsed,
       statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
   });
   renderUsers();
@@ -132,6 +133,9 @@ function renderUsers(){
       <td>${u.plan}</td>
       <td>${u.expiryStr}</td>
       <td>
+        ${u.dailyTrialUsed
+          ? `<button disabled title="1-day trial already used once" style="opacity:.4;cursor:not-allowed;border-color:#a78bfa;color:#a78bfa">+1day (used)</button>`
+          : `<button onclick="grantAccess('${u.id}','oneDayTrial')" style="border-color:#a78bfa;color:#a78bfa">+1day</button>`}
         <button onclick="grantAccess('${u.id}','monthly')">+1mo</button>
         <button onclick="grantAccess('${u.id}','yearly')">+1yr</button>
         <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
@@ -168,12 +172,11 @@ function exportToExcel(){
 }
 
 async function grantAccess(uid,plan){
-  const days=plan==="monthly"?30:365;
+  const days=plan==="oneDayTrial"?1:plan==="monthly"?30:365;
   const expiry=new Date(Date.now()+days*24*60*60*1000);
-  await db.collection("users").doc(uid).update({
-    plan,
-    subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)
-  });
+  const update={plan, subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)};
+  if(plan==="oneDayTrial")update.dailyTrialUsed=true; // one-time only, forever — never allow granting this again
+  await db.collection("users").doc(uid).update(update);
   loadUsers();
 }
 async function revokeAccess(uid){
