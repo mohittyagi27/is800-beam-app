@@ -11,38 +11,67 @@
 :root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#64748b;--red:#ef4444;--green:#22c55e}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:360px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:360px;position:relative}
+.lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace}
 h1{font-size:16px;color:var(--accent);letter-spacing:2px;text-align:center;margin-bottom:4px}
 .sub{font-size:10px;color:var(--muted);text-align:center;margin-bottom:20px;letter-spacing:1px}
 label{font-size:11px;color:#94a3b8;display:block;margin-bottom:4px;margin-top:12px}
 input{width:100%;background:#0b1120;border:1px solid #334155;color:var(--text);padding:9px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;outline:none}
 input:focus{border-color:var(--accent)}
-button{width:100%;padding:11px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px;margin-top:18px}
+button{width:100%;padding:11px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px;margin-top:14px}
 button:hover{opacity:.9}
 button:disabled{opacity:.5;cursor:not-allowed}
+.btn-google{background:#fff;color:#111;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
 .msg{font-size:11px;text-align:center;margin-top:12px;min-height:14px}
 .msg.err{color:var(--red)}
 .msg.ok{color:var(--green)}
 .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:16px}
 .foot a{color:var(--accent);text-decoration:none}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0 4px;color:#475569;font-size:10px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:#334155}
+.hidden{display:none}
+#recaptcha-container{margin-top:10px}
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>⚙ LOG IN</h1>
-  <div class="sub">IS 800 STEEL BEAM DESIGN TOOL</div>
+  <select class="lang-switch" onchange="setLang(this.value)"><option value="en">EN</option><option value="hi">हिं</option></select>
+  <h1 data-i18n="login_title">⚙ LOG IN</h1>
+  <div class="sub" data-i18n="login_sub">IS 800 STEEL BEAM DESIGN TOOL</div>
 
-  <label>Email</label>
-  <input type="email" id="email" placeholder="you@example.com">
-  <label>Password</label>
-  <input type="password" id="password" placeholder="••••••••">
+  <div id="email-form">
+    <label data-i18n="email_label">Email</label>
+    <input type="email" id="email" placeholder="you@example.com">
+    <label data-i18n="password_label">Password</label>
+    <input type="password" id="password" placeholder="••••••••">
+    <button id="btnLogin" onclick="doLogin()" data-i18n="login_btn">LOG IN</button>
+  </div>
 
-  <button id="btnLogin" onclick="doLogin()">LOG IN</button>
+  <div class="divider" data-i18n="or">— or —</div>
+  <button class="btn-google" onclick="doGoogleLogin()"><span>🔵</span> <span data-i18n="google_btn">Continue with Google</span></button>
+  <button class="btn-outline" onclick="togglePhoneLogin()" data-i18n="phone_login_btn">Continue with Phone Number</button>
+
+  <div id="phone-form" class="hidden">
+    <label>Phone Number</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
+      <input type="tel" id="phoneNumber" placeholder="9876543210">
+    </div>
+    <button onclick="sendLoginOtp()" data-i18n="send_otp">Send OTP</button>
+    <div id="otp-login-box" class="hidden">
+      <label data-i18n="otp_label">Enter OTP</label>
+      <input type="text" id="otpLoginInput" placeholder="123456">
+      <button onclick="verifyLoginOtp()" data-i18n="verify_otp">Verify OTP</button>
+    </div>
+    <div id="recaptcha-container"></div>
+  </div>
+
   <div class="msg" id="msg"></div>
   <div class="foot">
-    No account? <a href="signup.html">Sign up</a><br><br>
-    <a href="#" onclick="doReset();return false;">Forgot password?</a><br><br>
-    <a href="help.html" style="color:#64748b">❓ How to use this app</a>
+    <span data-i18n="no_account">No account?</span> <a href="signup.html" data-i18n="signup_link">Create an account</a><br><br>
+    <a href="#" onclick="doReset();return false;" data-i18n="forgot">Forgot password?</a><br><br>
+    <a href="help.html" style="color:#64748b" data-i18n="help_link">❓ How to use this app</a>
   </div>
 </div>
 
@@ -50,6 +79,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="translations.js"></script>
 <script>
 function setMsg(text,cls){const m=document.getElementById("msg");m.textContent=text;m.className="msg "+(cls||"");}
 
@@ -75,6 +105,48 @@ async function doReset(){
     setMsg("Password reset link email pe bhej di gayi hai.","ok");
   }catch(e){
     setMsg("Reset email nahi bhej paya — email check karo.","err");
+  }
+}
+
+async function doGoogleLogin(){
+  setMsg("Google ke sath sign in ho raha hai...","");
+  try{
+    const cred=await auth.signInWithPopup(googleProvider);
+    await ensureUserDoc(cred.user);
+    window.location.href="index.html";
+  }catch(e){
+    setMsg("Google sign-in fail hua: "+(e.message||""),"err");
+  }
+}
+
+function togglePhoneLogin(){
+  document.getElementById("phone-form").classList.toggle("hidden");
+}
+
+let loginConfirmationResult=null;
+function sendLoginOtp(){
+  const code=document.getElementById("phoneCode").value.trim();
+  const num=document.getElementById("phoneNumber").value.trim();
+  if(!num){setMsg("Phone number daalo.","err");return;}
+  const full=code+num;
+  try{
+    window.loginRecaptcha=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
+    auth.signInWithPhoneNumber(full,window.loginRecaptcha).then(res=>{
+      loginConfirmationResult=res;
+      document.getElementById("otp-login-box").classList.remove("hidden");
+      setMsg("OTP bhej diya gaya hai.","ok");
+    }).catch(e=>{ setMsg("OTP bhejne mein error: "+(e.message||""),"err"); });
+  }catch(e){ setMsg("Error: "+(e.message||""),"err"); }
+}
+async function verifyLoginOtp(){
+  const otp=document.getElementById("otpLoginInput").value.trim();
+  if(!loginConfirmationResult){setMsg("Pehle OTP bhejo.","err");return;}
+  try{
+    const cred=await loginConfirmationResult.confirm(otp);
+    await ensureUserDoc(cred.user);
+    window.location.href="index.html";
+  }catch(e){
+    setMsg("OTP galat hai.","err");
   }
 }
 </script>
