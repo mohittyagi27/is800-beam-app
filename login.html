@@ -50,22 +50,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <div class="divider" data-i18n="or">— or —</div>
   <button class="btn-google" onclick="doGoogleLogin()"><span>🔵</span> <span data-i18n="google_btn">Continue with Google</span></button>
-  <button class="btn-outline" onclick="togglePhoneLogin()" data-i18n="phone_login_btn">Continue with Phone Number</button>
-
-  <div id="phone-form" class="hidden">
-    <label>Phone Number</label>
-    <div style="display:flex;gap:6px">
-      <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
-      <input type="tel" id="phoneNumber" placeholder="9876543210">
-    </div>
-    <button onclick="sendLoginOtp()" data-i18n="send_otp">Send OTP</button>
-    <div id="otp-login-box" class="hidden">
-      <label data-i18n="otp_label">Enter OTP</label>
-      <input type="text" id="otpLoginInput" placeholder="123456">
-      <button onclick="verifyLoginOtp()" data-i18n="verify_otp">Verify OTP</button>
-    </div>
-    <div id="recaptcha-container"></div>
-  </div>
 
   <div class="msg" id="msg"></div>
   <div class="foot">
@@ -116,37 +100,6 @@ async function doGoogleLogin(){
     window.location.href="index.html";
   }catch(e){
     setMsg("Google sign-in fail hua: "+(e.message||""),"err");
-  }
-}
-
-function togglePhoneLogin(){
-  document.getElementById("phone-form").classList.toggle("hidden");
-}
-
-let loginConfirmationResult=null;
-function sendLoginOtp(){
-  const code=document.getElementById("phoneCode").value.trim();
-  const num=document.getElementById("phoneNumber").value.trim();
-  if(!num){setMsg("Phone number daalo.","err");return;}
-  const full=code+num;
-  try{
-    window.loginRecaptcha=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
-    auth.signInWithPhoneNumber(full,window.loginRecaptcha).then(res=>{
-      loginConfirmationResult=res;
-      document.getElementById("otp-login-box").classList.remove("hidden");
-      setMsg("OTP bhej diya gaya hai.","ok");
-    }).catch(e=>{ setMsg("OTP bhejne mein error: "+(e.message||""),"err"); });
-  }catch(e){ setMsg("Error: "+(e.message||""),"err"); }
-}
-async function verifyLoginOtp(){
-  const otp=document.getElementById("otpLoginInput").value.trim();
-  if(!loginConfirmationResult){setMsg("Pehle OTP bhejo.","err");return;}
-  try{
-    const cred=await loginConfirmationResult.confirm(otp);
-    await ensureUserDoc(cred.user);
-    window.location.href="index.html";
-  }catch(e){
-    setMsg("OTP galat hai.","err");
   }
 }
 </script>
