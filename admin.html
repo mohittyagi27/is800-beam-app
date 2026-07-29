@@ -42,25 +42,44 @@ button:hover{background:var(--accent);color:#000}
 </div>
 
 <div id="dashboard" style="display:none">
-  <h1>⚙ ADMIN DASHBOARD</h1>
-  <div class="stats">
-    <div class="stat"><div class="l">TOTAL USERS</div><div class="v" id="st-total">—</div></div>
-    <div class="stat"><div class="l">ACTIVE SUBSCRIBERS</div><div class="v" id="st-active">—</div></div>
-    <div class="stat"><div class="l">ON TRIAL</div><div class="v" id="st-trial">—</div></div>
-    <div class="stat"><div class="l">TRIAL EXPIRED (NOT PAID)</div><div class="v" id="st-expired">—</div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h1>⚙ ADMIN DASHBOARD</h1>
+    <a href="index.html" style="color:var(--accent);text-decoration:none;font-size:11px;border:1px solid var(--accent);padding:6px 12px;border-radius:6px">🏠 Home</a>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap" id="filter-bar">
-    <button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>
-    <button class="filter-btn" data-f="active" onclick="setFilter('active')">✅ Paid / Active</button>
-    <button class="filter-btn" data-f="trial" onclick="setFilter('trial')">On Trial</button>
-    <button class="filter-btn" data-f="expired" onclick="setFilter('expired')">⚠ Not Paid (Trial Used)</button>
-    <input type="text" id="search-box" placeholder="Search email..." oninput="renderUsers()" style="margin-left:auto;min-width:180px">
-    <button class="btn-export" onclick="exportToExcel()">⬇ Export to Excel</button>
+  <div style="display:flex;gap:8px;margin:14px 0" id="admin-tabs">
+    <button class="filter-btn admin-tab-btn active" data-tab="users" onclick="setAdminTab('users')">👤 Users</button>
+    <button class="filter-btn admin-tab-btn" data-tab="feedback" onclick="setAdminTab('feedback')">💬 Feedback <span id="fb-count-badge"></span></button>
   </div>
-  <table>
-    <thead><tr><th>Email</th><th>Status</th><th>Uses</th><th>Plan</th><th>Expiry</th><th>Actions</th></tr></thead>
-    <tbody id="user-rows"></tbody>
-  </table>
+  <div id="users-panel">
+    <div class="stats">
+      <div class="stat"><div class="l">TOTAL USERS</div><div class="v" id="st-total">—</div></div>
+      <div class="stat"><div class="l">ACTIVE SUBSCRIBERS</div><div class="v" id="st-active">—</div></div>
+      <div class="stat"><div class="l">ON TRIAL</div><div class="v" id="st-trial">—</div></div>
+      <div class="stat"><div class="l">TRIAL EXPIRED (NOT PAID)</div><div class="v" id="st-expired">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap" id="filter-bar">
+      <button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-f="active" onclick="setFilter('active')">✅ Paid / Active</button>
+      <button class="filter-btn" data-f="trial" onclick="setFilter('trial')">On Trial</button>
+      <button class="filter-btn" data-f="expired" onclick="setFilter('expired')">⚠ Not Paid (Trial Used)</button>
+      <input type="text" id="search-box" placeholder="Search email..." oninput="renderUsers()" style="margin-left:auto;min-width:180px">
+      <button class="btn-export" onclick="exportToExcel()">⬇ Export to Excel</button>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-bottom:10px;line-height:1.5">
+      ℹ️ "Reset Account" wipes usage/plan back to a fresh trial (login stays the same — the person does NOT need to sign up again). Fully deleting the login itself so the exact same email could be re-registered from scratch needs a backend and isn't available yet.
+    </div>
+    <table>
+      <thead><tr><th>Email</th><th>Phone</th><th>Status</th><th>Uses</th><th>Plan</th><th>Expiry</th><th>Actions</th></tr></thead>
+      <tbody id="user-rows"></tbody>
+    </table>
+  </div>
+
+  <div id="feedback-panel" style="display:none">
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Type</th><th>Message</th></tr></thead>
+      <tbody id="feedback-rows"></tbody>
+    </table>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -78,7 +97,30 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById("gate").style.display="none";
   document.getElementById("dashboard").style.display="block";
   loadUsers();
+  loadFeedback();
 });
+
+function setAdminTab(tab){
+  document.querySelectorAll(".admin-tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.getElementById("users-panel").style.display=tab==="users"?"block":"none";
+  document.getElementById("feedback-panel").style.display=tab==="feedback"?"block":"none";
+}
+
+let ALL_FEEDBACK=[];
+async function loadFeedback(){
+  const snap=await db.collection("feedback").orderBy("createdAt","desc").limit(200).get();
+  ALL_FEEDBACK=[];
+  snap.forEach(doc=>{
+    const d=doc.data();
+    ALL_FEEDBACK.push(d);
+  });
+  document.getElementById("fb-count-badge").textContent=ALL_FEEDBACK.length?`(${ALL_FEEDBACK.length})`:"";
+  const rows=document.getElementById("feedback-rows");
+  rows.innerHTML=ALL_FEEDBACK.map(f=>{
+    const dateStr=f.createdAt?new Date(f.createdAt.toMillis()).toLocaleString():"—";
+    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${f.email||"—"}</td><td>${f.type||"—"}</td><td style="max-width:400px">${(f.message||"").replace(/</g,"&lt;")}</td></tr>`;
+  }).join("") || `<tr><td colspan="4" style="color:var(--muted)">Abhi tak koi feedback nahi aaya.</td></tr>`;
+}
 
 let ALL_USERS=[];
 let CURRENT_FILTER="all";
@@ -97,7 +139,7 @@ async function loadUsers(){
     else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
     else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
     else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
-    ALL_USERS.push({id,email:d.email,usageCount:d.usageCount||0,plan:d.plan||"trial",
+    ALL_USERS.push({id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
       expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
       dailyTrialUsed:!!d.dailyTrialUsed,
       statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
@@ -128,6 +170,7 @@ function renderUsers(){
   rows.innerHTML=list.map(u=>`
     <tr>
       <td>${u.email}</td>
+      <td>${u.phone}${u.phoneVerified?' <span style="color:var(--green)">✓</span>':''}</td>
       <td>${u.statusBadge}</td>
       <td>${u.usageCount} / ${FREE_TRIAL_USES}</td>
       <td>${u.plan}</td>
@@ -139,6 +182,7 @@ function renderUsers(){
         <button onclick="grantAccess('${u.id}','monthly')">+1mo</button>
         <button onclick="grantAccess('${u.id}','yearly')">+1yr</button>
         <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
+        ${u.isAdmin?"":`<button onclick="resetAccount('${u.id}','${u.email}')" style="border-color:#fb923c;color:#fb923c">Reset Account</button>`}
       </td>`).join("");
   // Stats always reflect the FULL user base, not the current filter/search.
   const total=ALL_USERS.length;
@@ -157,6 +201,7 @@ function exportToExcel(){
   const statusLabel={admin:"Admin",active:"Paid / Active",trial:"On Trial",expired:"Trial Used — Not Paid"};
   const rows=list.map(u=>({
     "Email":u.email,
+    "Phone":u.phone,
     "Status":statusLabel[u.statusKey]||u.statusKey,
     "Uses":`${u.usageCount} / ${FREE_TRIAL_USES}`,
     "Plan":u.plan,
@@ -164,7 +209,7 @@ function exportToExcel(){
     "Last Payment ID":u.lastPaymentId
   }));
   const ws=XLSX.utils.json_to_sheet(rows);
-  ws["!cols"]=[{wch:28},{wch:22},{wch:10},{wch:12},{wch:18},{wch:24}];
+  ws["!cols"]=[{wch:28},{wch:16},{wch:22},{wch:10},{wch:12},{wch:18},{wch:24}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Users");
   const dateTag=new Date().toISOString().slice(0,10);
@@ -186,6 +231,17 @@ async function revokeAccess(uid){
     subscriptionExpiry:null
   });
   loadUsers();
+}
+async function resetAccount(uid,email){
+  if(!confirm(`"${email}" ka account reset karna hai?\n\nYe unka usage count, plan, aur trial history WIPE kar dega — jaise unhone abhi-abhi naya account banaya ho. Unka LOGIN (email/password) same rahega, unhe dobara signup nahi karna padega.`))return;
+  await db.collection("users").doc(uid).update({
+    usageCount:0,
+    plan:"trial",
+    subscriptionExpiry:null,
+    dailyTrialUsed:false
+  });
+  loadUsers();
+  alert("Account reset ho gaya — user ab fresh trial ke sath login kar sakta hai.");
 }
 </script>
 </body>
