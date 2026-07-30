@@ -53,6 +53,7 @@ button:hover{background:var(--accent);color:#000}
   <div id="users-panel">
     <div class="stats">
       <div class="stat"><div class="l">TOTAL USERS</div><div class="v" id="st-total">—</div></div>
+      <div class="stat"><div class="l">🟢 CURRENTLY ONLINE</div><div class="v" id="st-online" style="color:#22c55e">—</div></div>
       <div class="stat"><div class="l">ACTIVE SUBSCRIBERS</div><div class="v" id="st-active">—</div></div>
       <div class="stat"><div class="l">ON TRIAL</div><div class="v" id="st-trial">—</div></div>
       <div class="stat"><div class="l">TRIAL EXPIRED (NOT PAID)</div><div class="v" id="st-expired">—</div></div>
@@ -139,9 +140,11 @@ async function loadUsers(){
     else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
     else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
     else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
+    const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
+    const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
     ALL_USERS.push({id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
       expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
-      dailyTrialUsed:!!d.dailyTrialUsed,
+      dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
       statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
   });
   renderUsers();
@@ -169,7 +172,7 @@ function renderUsers(){
   const rows=document.getElementById("user-rows");
   rows.innerHTML=list.map(u=>`
     <tr>
-      <td>${u.email}</td>
+      <td>${u.isOnline?'<span style="color:#22c55e" title="Online (active in last 2 min)">●</span> ':'<span style="color:#374151">●</span> '}${u.email}</td>
       <td>${u.phone}${u.phoneVerified?' <span style="color:var(--green)">✓</span>':''}</td>
       <td>${u.statusBadge}</td>
       <td>${u.usageCount} / ${FREE_TRIAL_USES}</td>
@@ -186,10 +189,12 @@ function renderUsers(){
       </td>`).join("");
   // Stats always reflect the FULL user base, not the current filter/search.
   const total=ALL_USERS.length;
+  const online=ALL_USERS.filter(u=>u.isOnline).length;
   const active=ALL_USERS.filter(u=>u.statusKey==="active").length;
   const trial=ALL_USERS.filter(u=>u.statusKey==="trial").length;
   const expired=ALL_USERS.filter(u=>u.statusKey==="expired").length;
   document.getElementById("st-total").textContent=total;
+  document.getElementById("st-online").textContent=online;
   document.getElementById("st-active").textContent=active;
   document.getElementById("st-trial").textContent=trial;
   document.getElementById("st-expired").textContent=expired;
