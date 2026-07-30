@@ -15,6 +15,9 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace}
 h1{font-size:16px;color:var(--accent);letter-spacing:2px;text-align:center;margin-bottom:4px}
 .sub{font-size:10px;color:var(--muted);text-align:center;margin-bottom:20px;letter-spacing:1px}
+.tabs2{display:flex;gap:0;margin-bottom:18px;border:1px solid #334155;border-radius:8px;overflow:hidden}
+.tabs2 a{flex:1;text-align:center;padding:9px 4px;font-size:11px;text-decoration:none;color:var(--muted);font-weight:bold;letter-spacing:.5px}
+.tabs2 a.active{background:var(--accent);color:#000}
 label{font-size:11px;color:#94a3b8;display:block;margin-bottom:4px;margin-top:12px}
 input{width:100%;background:#0b1120;border:1px solid #334155;color:var(--text);padding:9px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;outline:none}
 input:focus{border-color:var(--accent)}
@@ -22,7 +25,6 @@ button{width:100%;padding:11px;background:var(--accent);border:none;border-radiu
 button:hover{opacity:.9}
 button:disabled{opacity:.5;cursor:not-allowed}
 .btn-google{background:#fff;color:#111;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
 .msg{font-size:11px;text-align:center;margin-top:12px;min-height:14px}
 .msg.err{color:var(--red)}
 .msg.ok{color:var(--green)}
@@ -31,12 +33,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .divider{display:flex;align-items:center;gap:10px;margin:16px 0 4px;color:#475569;font-size:10px}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:#334155}
 .hidden{display:none}
-#recaptcha-container{margin-top:10px}
+.verify-box{background:#1c1608;border:1px solid var(--green);border-radius:6px;padding:14px;font-size:11px;color:#fcd34d;margin-top:12px;text-align:center;line-height:1.6}
 </style>
 </head>
 <body>
 <div class="card">
   <select class="lang-switch" onchange="setLang(this.value)"><option value="en">EN</option><option value="hi">हिं</option></select>
+  <div class="tabs2"><a href="signup.html">CREATE ACCOUNT</a><a href="login.html" class="active">LOG IN</a></div>
   <h1 data-i18n="login_title">⚙ LOG IN</h1>
   <div class="sub" data-i18n="login_sub">IS 800 STEEL BEAM DESIGN TOOL</div>
 
@@ -51,9 +54,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <div class="divider" data-i18n="or">— or —</div>
   <button class="btn-google" onclick="doGoogleLogin()"><span>🔵</span> <span data-i18n="google_btn">Continue with Google</span></button>
 
+  <div id="verify-box" class="verify-box hidden">
+    ⚠️ Aapka email abhi verify nahi hua hai.<br>
+    Signup ke waqt bheja gaya verification link check karo (inbox/spam).<br>
+    <button onclick="resendVerification()" style="margin-top:10px">Resend Verification Email</button>
+  </div>
+
   <div class="msg" id="msg"></div>
   <div class="foot">
-    <span data-i18n="no_account">No account?</span> <a href="signup.html" data-i18n="signup_link">Create an account</a><br><br>
     <a href="#" onclick="doReset();return false;" data-i18n="forgot">Forgot password?</a><br><br>
     <a href="help.html" style="color:#64748b" data-i18n="help_link">❓ How to use this app</a>
   </div>
@@ -66,6 +74,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <script src="translations.js"></script>
 <script>
 function setMsg(text,cls){const m=document.getElementById("msg");m.textContent=text;m.className="msg "+(cls||"");}
+let pendingUnverifiedUser=null;
 
 async function doLogin(){
   const email=document.getElementById("email").value.trim();
@@ -73,12 +82,32 @@ async function doLogin(){
   if(!email||!pw){setMsg("Email aur password bharo.","err");return;}
   const btn=document.getElementById("btnLogin");
   btn.disabled=true;setMsg("Login ho raha hai...","");
+  document.getElementById("verify-box").classList.add("hidden");
   try{
-    await auth.signInWithEmailAndPassword(email,pw);
+    const cred=await auth.signInWithEmailAndPassword(email,pw);
+    const isPasswordAccount=cred.user.providerData.some(p=>p.providerId==="password");
+    if(isPasswordAccount && !cred.user.emailVerified){
+      pendingUnverifiedUser=cred.user;
+      document.getElementById("verify-box").classList.remove("hidden");
+      setMsg("Pehle apna email verify karo, phir login karo.","err");
+      await auth.signOut();
+      btn.disabled=false;
+      return;
+    }
+    await ensureUserDoc(cred.user);
     window.location.href="index.html";
   }catch(e){
     setMsg("Email ya password galat hai.","err");
     btn.disabled=false;
+  }
+}
+async function resendVerification(){
+  if(!pendingUnverifiedUser){setMsg("Pehle login try karo, phir resend dabao.","err");return;}
+  try{
+    await pendingUnverifiedUser.sendEmailVerification();
+    setMsg("Verification email dobara bhej di gayi hai.","ok");
+  }catch(e){
+    setMsg("Bhejne mein error — thodi der baad try karo.","err");
   }
 }
 async function doReset(){
