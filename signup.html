@@ -55,12 +55,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <label data-i18n="confirm_password_label">Confirm Password</label>
   <input type="password" id="password2" placeholder="••••••••">
 
-  <label data-i18n="phone_label">Phone Number (optional)</label>
+  <label>Phone Number <span style="color:var(--red)">*</span></label>
   <div class="phone-row">
     <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
-    <input type="tel" id="phoneNumber" placeholder="9876543210">
+    <input type="tel" id="phoneNumber" placeholder="9876543210" required>
   </div>
-  <div style="font-size:9px;color:#64748b;margin-top:4px">Bilkul optional hai — khaali chhod sakte ho.</div>
 
   <button id="btnSignup" onclick="doSignup()" data-i18n="signup_btn">SIGN UP — 3 FREE CALCULATIONS</button>
   <div class="msg" id="msg"></div>
@@ -86,12 +85,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 function setMsg(text,cls){const m=document.getElementById("msg");m.textContent=text;m.className="msg "+(cls||"");}
 
 async function doGoogleSignup(){
+  const code=document.getElementById("phoneCode").value.trim();
+  const phone=document.getElementById("phoneNumber").value.trim();
+  if(!phone){setMsg("Phone number daalna zaroori hai.","err");return;}
   setMsg("Google ke sath sign up ho raha hai...","");
   try{
     const cred=await auth.signInWithPopup(googleProvider);
-    const phone=document.getElementById("phoneNumber").value.trim();
-    const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
-    await ensureUserDoc(cred.user, extra);
+    await ensureUserDoc(cred.user, {phone:code+phone, phoneVerified:false});
     // Google accounts are already email-verified by Google — no extra step needed.
     window.location.href="index.html";
   }catch(e){
@@ -103,16 +103,17 @@ async function doSignup(){
   const email=document.getElementById("email").value.trim();
   const pw=document.getElementById("password").value;
   const pw2=document.getElementById("password2").value;
+  const code=document.getElementById("phoneCode").value.trim();
+  const phone=document.getElementById("phoneNumber").value.trim();
   if(!email||!pw){setMsg("Email aur password dono bharo.","err");return;}
   if(pw.length<6){setMsg("Password kam se kam 6 characters ka hona chahiye.","err");return;}
   if(pw!==pw2){setMsg("Passwords match nahi kar rahe.","err");return;}
+  if(!phone){setMsg("Phone number daalna zaroori hai.","err");return;}
   const btn=document.getElementById("btnSignup");
   btn.disabled=true;setMsg("Account ban raha hai...","");
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pw);
-    const phone=document.getElementById("phoneNumber").value.trim();
-    const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
-    await ensureUserDoc(cred.user, extra);
+    await ensureUserDoc(cred.user, {phone:code+phone, phoneVerified:false});
     // Send a real email-ownership verification link — this is what stops
     // someone typing in a fake/random email that isn't actually theirs.
     await cred.user.sendEmailVerification();
