@@ -15,6 +15,9 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace}
 h1{font-size:16px;color:var(--accent);letter-spacing:2px;text-align:center;margin-bottom:4px}
 .sub{font-size:10px;color:var(--muted);text-align:center;margin-bottom:20px;letter-spacing:1px}
+.tabs2{display:flex;gap:0;margin-bottom:18px;border:1px solid #334155;border-radius:8px;overflow:hidden}
+.tabs2 a{flex:1;text-align:center;padding:9px 4px;font-size:11px;text-decoration:none;color:var(--muted);font-weight:bold;letter-spacing:.5px}
+.tabs2 a.active{background:var(--accent);color:#000}
 label{font-size:11px;color:#94a3b8;display:block;margin-bottom:4px;margin-top:12px}
 input{width:100%;background:#0b1120;border:1px solid #334155;color:var(--text);padding:9px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;outline:none}
 input:focus{border-color:var(--accent)}
@@ -22,7 +25,6 @@ button{width:100%;padding:11px;background:var(--accent);border:none;border-radiu
 button:hover{opacity:.9}
 button:disabled{opacity:.5;cursor:not-allowed}
 .btn-google{background:#fff;color:#111;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent);width:auto;padding:8px 12px;font-size:10px;margin-top:8px}
 .msg{font-size:11px;text-align:center;margin-top:12px;min-height:14px}
 .msg.err{color:var(--red)}
 .msg.ok{color:var(--green)}
@@ -31,7 +33,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .divider{display:flex;align-items:center;gap:10px;margin:16px 0 4px;color:#475569;font-size:10px}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:#334155}
 .hidden{display:none}
-#recaptcha-container-su{margin-top:6px}
 .phone-row{display:flex;gap:6px;align-items:flex-end}
 .success-box{text-align:center}
 .success-box .tick{font-size:34px;margin-bottom:10px}
@@ -40,6 +41,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <body>
 <div class="card" id="signup-card">
   <select class="lang-switch" onchange="setLang(this.value)"><option value="en">EN</option><option value="hi">हिं</option></select>
+  <div class="tabs2"><a href="signup.html" class="active">CREATE ACCOUNT</a><a href="login.html">LOG IN</a></div>
   <h1 data-i18n="signup_title">⚙ CREATE ACCOUNT</h1>
   <div class="sub" data-i18n="signup_sub">IS 800 STEEL BEAM DESIGN TOOL</div>
 
@@ -58,18 +60,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
     <input type="tel" id="phoneNumber" placeholder="9876543210">
   </div>
-  <div style="font-size:9px;color:#64748b;margin-top:4px">OTP verification abhi available nahi hai — phone number sirf record ke liye save hota hai.</div>
+  <div style="font-size:9px;color:#64748b;margin-top:4px">Bilkul optional hai — khaali chhod sakte ho.</div>
 
   <button id="btnSignup" onclick="doSignup()" data-i18n="signup_btn">SIGN UP — 3 FREE CALCULATIONS</button>
   <div class="msg" id="msg"></div>
-  <div class="foot"><span data-i18n="have_account">Already have an account?</span> <a href="login.html" data-i18n="login_link">Log in</a><br><br><a href="help.html" style="color:#64748b" data-i18n="help_link">❓ How to use this app</a></div>
+  <div class="foot"><a href="help.html" style="color:#64748b" data-i18n="help_link">❓ How to use this app</a></div>
 </div>
 
 <div class="card success-box hidden" id="success-card">
   <div class="tick">✅</div>
-  <h1 data-i18n="success_title" style="color:var(--green)">ACCOUNT CREATED SUCCESSFULLY!</h1>
-  <div class="sub" data-i18n="success_sub" style="margin-top:10px">Ab apne email aur password se login karein.</div>
-  <button onclick="location.href='login.html'" data-i18n="go_login">GO TO LOGIN</button>
+  <h1 style="color:var(--green)">ACCOUNT CREATED SUCCESSFULLY!</h1>
+  <div class="sub" style="margin-top:10px;font-size:11px;line-height:1.6">
+    Aapke email pe ek <b style="color:var(--accent)">verification link</b> bheja gaya hai.<br>
+    Pehle wo link kholke email verify karo, phir login karo.
+  </div>
+  <button onclick="location.href='login.html'">GO TO LOGIN</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -87,6 +92,7 @@ async function doGoogleSignup(){
     const phone=document.getElementById("phoneNumber").value.trim();
     const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
     await ensureUserDoc(cred.user, extra);
+    // Google accounts are already email-verified by Google — no extra step needed.
     window.location.href="index.html";
   }catch(e){
     setMsg("Google sign-up fail hua: "+(e.message||""),"err");
@@ -107,12 +113,14 @@ async function doSignup(){
     const phone=document.getElementById("phoneNumber").value.trim();
     const extra=phone?{phone:document.getElementById("phoneCode").value.trim()+phone,phoneVerified:false}:{};
     await ensureUserDoc(cred.user, extra);
+    // Send a real email-ownership verification link — this is what stops
+    // someone typing in a fake/random email that isn't actually theirs.
+    await cred.user.sendEmailVerification();
     // Do NOT auto-login the user into the app — sign them out and show a
-    // clear "account created" confirmation, then send them to the login page.
+    // clear "account created, please verify" confirmation.
     await auth.signOut();
     document.getElementById("signup-card").classList.add("hidden");
     document.getElementById("success-card").classList.remove("hidden");
-    applyLang();
   }catch(e){
     let m=e.message||"Kuch galat ho gaya.";
     if(e.code==="auth/email-already-in-use")m="Ye email pehle se registered hai — Login page pe jao.";
