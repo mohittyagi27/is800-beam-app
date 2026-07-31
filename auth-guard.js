@@ -24,36 +24,33 @@ function isSubscriptionActive(d){
 
 function showPaywall(dailyTrialUsed){
   const dailyBtn = dailyTrialUsed
-    ? `<div style="width:100%;padding:11px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;margin-bottom:8px;box-sizing:border-box">✓ 1-Day Trial already used (one-time only)</div>`
-    : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:11px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">TRY 1 DAY — ₹1 (one-time only)</a>`;
+    ? `<div style="width:100%;padding:11px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;margin-bottom:8px;box-sizing:border-box">${t("pw_trial_used")}</div>`
+    : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:11px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">${t("pw_try_day")}</a>`;
   ov(`
     <div style="max-width:380px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:26px;text-align:center">
-      <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">🔒 FREE TRIAL KHATAM</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:18px;line-height:1.6">
-        Aapne ${FREE_TRIAL_USES} free calculations use kar liye hain.<br>
-        Aage use karne ke liye subscribe karo.
-      </div>
+      <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">${t("pw_title")}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:18px;line-height:1.6;white-space:pre-line">${t("pw_sub",{n:FREE_TRIAL_USES})}</div>
 
       ${dailyBtn}
       <a href="${PAYMENT_LINKS.monthly}" target="_blank" style="display:block;width:100%;padding:11px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">
-        MONTHLY — ₹299/month
+        ${t("pw_monthly")}
       </a>
       <a href="${PAYMENT_LINKS.yearly}" target="_blank" style="display:block;width:100%;padding:11px;background:#f59e0b;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:16px">
-        YEARLY — ₹2999/year
+        ${t("pw_yearly")}
       </a>
 
       <div style="font-size:9px;color:#64748b;line-height:1.6;border-top:1px solid #1e3050;padding-top:12px">
-        Payment ke baad apna <b style="color:#94a3b8">email</b> aur <b style="color:#94a3b8">payment screenshot</b> WhatsApp par bhejo:<br>
+        ${t("pw_afterpay")} <b style="color:#94a3b8">${t("pw_email_word")}</b> ${t("pw_and")} <b style="color:#94a3b8">${t("pw_screenshot_word")}</b> ${t("pw_via_whatsapp")}<br>
         <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">WhatsApp: +91 ${SUPPORT_WHATSAPP.slice(2)}</a><br>
-        Access thodi der mein (admin verify karke) activate ho jayega.
+        ${t("pw_activate_note")}
       </div>
 
       <div style="font-size:9px;color:#64748b;margin-top:10px">
-        Ya seedha UPI se bhi bhej sakte ho: <span style="color:#22c55e;font-weight:bold;user-select:all">${UPI_ID}</span>
+        ${t("pw_or_upi")} <span style="color:#22c55e;font-weight:bold;user-select:all">${UPI_ID}</span>
       </div>
 
       <div style="font-size:10px;color:#64748b;margin-top:16px">
-        <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">Logout</a>
+        <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">${t("logout")}</a>
       </div>
     </div>
   `);
@@ -67,15 +64,15 @@ function showVerifyEmailScreen(user){
   ov(`
     <div style="max-width:380px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:26px;text-align:center">
       <div style="font-size:30px;margin-bottom:10px">📧</div>
-      <div style="font-size:14px;color:#f59e0b;letter-spacing:1px;margin-bottom:10px">EMAIL VERIFY NAHI HUA</div>
+      <div style="font-size:14px;color:#f59e0b;letter-spacing:1px;margin-bottom:10px">${t("verify_title")}</div>
       <div style="font-size:11px;color:#94a3b8;line-height:1.6;margin-bottom:16px">
         <b style="color:#e2e8f0">${user.email}</b> pe ek verification link bheja gaya tha.<br>
         Pehle wo link kholo (inbox/spam check karo), phir yahan wapas aakar refresh karo.
       </div>
-      <button onclick="user.sendEmailVerification().then(()=>alert('Dobara bhej diya!'))" style="width:100%;padding:11px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px">Resend Verification Email</button>
-      <button onclick="location.reload()" style="width:100%;padding:11px;background:#22c55e;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">✓ Maine Verify Kar Liya — Refresh Karo</button>
+      <button onclick="user.sendEmailVerification().then(()=>alert('Dobara bhej diya!'))" style="width:100%;padding:11px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px">${t("verify_resend")}</button>
+      <button onclick="location.reload()" style="width:100%;padding:11px;background:#22c55e;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">${t("verify_done")}</button>
       <div style="font-size:10px;color:#64748b;margin-top:16px">
-        <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">Logout</a>
+        <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">${t("logout")}</a>
       </div>
     </div>
   `);
@@ -108,20 +105,23 @@ function injectTopBar(email,usesLeft,isActive,isAdmin,online){
     bar.style.cssText="display:flex;justify-content:center;align-items:center;gap:8px;padding:8px;font-size:10px;color:#94a3b8;border-bottom:1px solid #1e3050;margin-bottom:8px;flex-wrap:wrap";
     document.body.insertBefore(bar,document.body.firstChild.nextSibling);
   }
-  const statusTxt=isAdmin?`<span style="color:#c4b5fd">ADMIN</span>`
-    :isActive?`<span style="color:#22c55e">SUBSCRIBED</span>`
-    :`<span style="color:#f59e0b">${usesLeft} free use${usesLeft===1?"":"s"} left</span>`;
+  const statusTxt=isAdmin?`<span style="color:#c4b5fd">${t("tb_admin_tag")}</span>`
+    :isActive?`<span style="color:#22c55e">${t("tb_subscribed")}</span>`
+    :`<span style="color:#f59e0b">${usesLeft} ${t("tb_uses_left")}</span>`;
   bar.innerHTML=`
     <span><span style="color:#22c55e">●</span> ${email}</span>
     <span>${statusTxt}</span>
-    <a href="help.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">❓ Help</a>
-    <a href="feedback.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">💬 Feedback</a>
-    <button id="shareBtn" style="background:transparent;border:1px solid #a78bfa;color:#a78bfa;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">📤 Share</button>
-    <button id="installBtn" style="background:transparent;border:1px solid #22c55e;color:#6ee7b7;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">⬇ Install App</button>
-    ${isAdmin?`<a href="admin.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">⚙ Admin Panel</a>`:""}
-    <button id="logoutBtn" style="background:transparent;border:1px solid #ef4444;color:#ef4444;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">Logout</button>`;
+    ${isActive||isAdmin?"":`<button id="subscribeBtn" style="background:#052e16;border:1px solid #22c55e;color:#6ee7b7;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace;font-weight:bold">${t("tb_subscribe")}</button>`}
+    <a href="help.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">${t("tb_help")}</a>
+    <a href="feedback.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">${t("tb_feedback")}</a>
+    <button id="shareBtn" style="background:transparent;border:1px solid #a78bfa;color:#a78bfa;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">${t("tb_share")}</button>
+    <button id="installBtn" style="background:transparent;border:1px solid #22c55e;color:#6ee7b7;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">${t("tb_install")}</button>
+    ${isAdmin?`<a href="admin.html" style="background:transparent;border:1px solid #38bdf8;color:#38bdf8;padding:4px 11px;border-radius:14px;font-size:9.5px;text-decoration:none">${t("tb_admin")}</a>`:""}
+    <button id="logoutBtn" style="background:transparent;border:1px solid #ef4444;color:#ef4444;padding:4px 11px;border-radius:14px;font-size:9.5px;cursor:pointer;font-family:'Courier New',monospace">${t("logout")}</button>`;
   document.getElementById("logoutBtn").onclick=()=>{auth.signOut().then(()=>location.href="login.html");};
   document.getElementById("shareBtn").onclick=shareApp;
+  const subBtn=document.getElementById("subscribeBtn");
+  if(subBtn)subBtn.onclick=()=>showPaywall(!!CURRENT_USER_DATA?.dailyTrialUsed);
   document.getElementById("installBtn").onclick=()=>{
     if(window.deferredInstallPrompt){
       window.deferredInstallPrompt.prompt();
