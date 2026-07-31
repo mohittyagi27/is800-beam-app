@@ -21,7 +21,22 @@ const TRANSLATIONS = {
     success_sub: "Ab apne email aur password se login karein.",
     go_login: "GO TO LOGIN",
     help_link: "How to use this app",
-    lang_label: "Language"
+    lang_label: "Language",
+    pw_title: "🔒 FREE TRIAL OVER", pw_sub: "You have used {n} free calculations.\nSubscribe to continue using.",
+    pw_trial_used: "✓ 1-Day Trial already used (one-time only)",
+    pw_try_day: "TRY 1 DAY — ₹1 (one-time only)",
+    pw_monthly: "MONTHLY — ₹299/month", pw_yearly: "YEARLY — ₹2999/year",
+    pw_afterpay: "After payment, send your", pw_email_word: "email", pw_and: "and", pw_screenshot_word: "payment screenshot", pw_via_whatsapp: "on WhatsApp:",
+    pw_activate_note: "Access will be activated shortly (after admin verifies).",
+    pw_or_upi: "Or pay directly via UPI:",
+    logout: "Logout",
+    tb_help: "❓ Help", tb_feedback: "💬 Feedback", tb_share: "📤 Share", tb_install: "⬇ Install App",
+    tb_admin: "⚙ Admin Panel", tb_subscribe: "💳 Subscribe",
+    tb_subscribed: "SUBSCRIBED", tb_admin_tag: "ADMIN", tb_uses_left: "free use(s) left",
+    verify_title: "EMAIL NOT VERIFIED YET", verify_resend: "Resend Verification Email", verify_done: "✓ I've Verified — Refresh",
+    phone_required_label: "Phone Number", phone_required_star: "*",
+    verify_box_msg: "⚠️ Your email is not verified yet.", verify_box_msg2: "Check the verification link sent during signup (inbox/spam).",
+    resend_btn: "Resend Verification Email"
   },
   hi: {
     login_title: "लॉग इन करें", login_sub: "IS 800 स्टील बीम डिज़ाइन टूल",
@@ -41,12 +56,33 @@ const TRANSLATIONS = {
     success_sub: "अब अपने ईमेल और पासवर्ड से लॉग इन करें।",
     go_login: "लॉग इन पर जाएं",
     help_link: "यह ऐप कैसे इस्तेमाल करें",
-    lang_label: "भाषा"
+    lang_label: "भाषा",
+    pw_title: "🔒 फ्री ट्रायल खत्म", pw_sub: "आपने {n} फ्री कैलकुलेशन इस्तेमाल कर लिए हैं।\nआगे इस्तेमाल के लिए सब्सक्राइब करें।",
+    pw_trial_used: "✓ 1-दिन का ट्रायल पहले इस्तेमाल हो चुका है (सिर्फ एक बार)",
+    pw_try_day: "1 दिन आज़माएं — ₹1 (सिर्फ एक बार)",
+    pw_monthly: "मासिक — ₹299/माह", pw_yearly: "वार्षिक — ₹2999/साल",
+    pw_afterpay: "पेमेंट के बाद अपना", pw_email_word: "ईमेल", pw_and: "और", pw_screenshot_word: "पेमेंट स्क्रीनशॉट", pw_via_whatsapp: "व्हाट्सएप पर भेजें:",
+    pw_activate_note: "थोड़ी देर में (एडमिन वेरिफाई करने के बाद) एक्सेस मिल जाएगा।",
+    pw_or_upi: "या सीधे UPI से भी भेज सकते हैं:",
+    logout: "लॉग आउट",
+    tb_help: "❓ मदद", tb_feedback: "💬 फीडबैक", tb_share: "📤 शेयर", tb_install: "⬇ ऐप इंस्टॉल करें",
+    tb_admin: "⚙ एडमिन पैनल", tb_subscribe: "💳 सब्सक्राइब करें",
+    tb_subscribed: "सब्सक्राइब्ड", tb_admin_tag: "एडमिन", tb_uses_left: "फ्री उपयोग बचे",
+    verify_title: "ईमेल अभी वेरीफाई नहीं हुआ", verify_resend: "वेरिफिकेशन ईमेल दोबारा भेजें", verify_done: "✓ मैंने वेरीफाई कर लिया — रिफ्रेश करें",
+    phone_required_label: "फ़ोन नंबर", phone_required_star: "*",
+    verify_box_msg: "⚠️ आपका ईमेल अभी वेरीफाई नहीं हुआ है।", verify_box_msg2: "साइनअप के समय भेजा गया वेरिफिकेशन लिंक चेक करें (इनबॉक्स/स्पैम)।",
+    resend_btn: "वेरिफिकेशन ईमेल दोबारा भेजें"
   }
 };
 
 function getLang(){ return localStorage.getItem("appLang") || "en"; }
-function setLang(l){ localStorage.setItem("appLang", l); applyLang(); }
+function setLang(l){ localStorage.setItem("appLang", l); applyLang(); if(typeof onLangChange==="function")onLangChange(); }
+function t(key,vars){
+  const dict = TRANSLATIONS[getLang()] || TRANSLATIONS.en;
+  let str = dict[key] !== undefined ? dict[key] : (TRANSLATIONS.en[key] || key);
+  if(vars) Object.keys(vars).forEach(k=>{ str = str.replace("{"+k+"}", vars[k]); });
+  return str;
+}
 function applyLang(){
   const lang = getLang();
   const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
