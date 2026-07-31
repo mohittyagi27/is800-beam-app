@@ -48,6 +48,7 @@ button:hover{background:var(--accent);color:#000}
   </div>
   <div style="display:flex;gap:8px;margin:14px 0" id="admin-tabs">
     <button class="filter-btn admin-tab-btn active" data-tab="users" onclick="setAdminTab('users')">👤 Users</button>
+    <button class="filter-btn admin-tab-btn" data-tab="payments" onclick="setAdminTab('payments')">💰 Payments <span id="pay-count-badge"></span></button>
     <button class="filter-btn admin-tab-btn" data-tab="feedback" onclick="setAdminTab('feedback')">💬 Feedback <span id="fb-count-badge"></span></button>
   </div>
   <div id="users-panel">
@@ -75,6 +76,23 @@ button:hover{background:var(--accent);color:#000}
     </table>
   </div>
 
+  <div id="payments-panel" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="l">THIS MONTH TOTAL</div><div class="v" id="pay-month-total" style="color:var(--green)">—</div></div>
+      <div class="stat"><div class="l">ALL-TIME TOTAL</div><div class="v" id="pay-all-total" style="color:var(--green)">—</div></div>
+      <div class="stat"><div class="l">TOTAL PAYMENTS</div><div class="v" id="pay-count">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <select id="pay-month-filter" onchange="renderPayments()" style="padding:6px 10px;border-radius:6px"></select>
+      <button class="btn-export" onclick="addManualPaymentRecord()">+ Add Payment Record</button>
+      <button class="btn-export" style="background:#38bdf8" onclick="exportPaymentsToExcel()">⬇ Export to Excel</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Amount</th><th>Plan</th><th>Transaction ID</th><th>Note</th></tr></thead>
+      <tbody id="payment-rows"></tbody>
+    </table>
+  </div>
+
   <div id="feedback-panel" style="display:none">
     <table>
       <thead><tr><th>Date</th><th>Email</th><th>Type</th><th>Message</th></tr></thead>
@@ -99,12 +117,93 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById("dashboard").style.display="block";
   loadUsers();
   loadFeedback();
+  loadPayments();
 });
 
 function setAdminTab(tab){
   document.querySelectorAll(".admin-tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   document.getElementById("users-panel").style.display=tab==="users"?"block":"none";
+  document.getElementById("payments-panel").style.display=tab==="payments"?"block":"none";
   document.getElementById("feedback-panel").style.display=tab==="feedback"?"block":"none";
+}
+
+let ALL_PAYMENTS=[];
+async function loadPayments(){
+  const snap=await db.collection("payments").orderBy("createdAt","desc").limit(500).get();
+  ALL_PAYMENTS=[];
+  snap.forEach(doc=>{ ALL_PAYMENTS.push(doc.data()); });
+  document.getElementById("pay-count-badge").textContent=ALL_PAYMENTS.length?`(${ALL_PAYMENTS.length})`:"";
+  // Populate month filter dropdown from actual payment months present
+  const months=new Set();
+  ALL_PAYMENTS.forEach(p=>{ if(p.createdAt){ const d=new Date(p.createdAt.toMillis()); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } });
+  const sel=document.getElementById("pay-month-filter");
+  const prevVal=sel.value;
+  const sortedMonths=[...months].sort().reverse();
+  sel.innerHTML=`<option value="all">All Months</option>`+sortedMonths.map(m=>{
+    const [y,mo]=m.split("-");
+    const label=new Date(y,mo-1,1).toLocaleString("en-US",{month:"long",year:"numeric"});
+    return `<option value="${m}">${label}</option>`;
+  }).join("");
+  sel.value=sortedMonths.includes(prevVal)?prevVal:"all";
+  renderPayments();
+}
+
+function renderPayments(){
+  const filterMonth=document.getElementById("pay-month-filter").value;
+  const list=ALL_PAYMENTS.filter(p=>{
+    if(filterMonth==="all"||!p.createdAt)return true;
+    const d=new Date(p.createdAt.toMillis());
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    return key===filterMonth;
+  });
+  const rows=document.getElementById("payment-rows");
+  rows.innerHTML=list.map(p=>{
+    const dateStr=p.createdAt?new Date(p.createdAt.toMillis()).toLocaleString():"—";
+    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${p.email||"—"}</td><td style="color:var(--green)">₹${p.amount||"—"}</td><td>${p.plan||"—"}</td><td style="font-size:9px">${p.transactionId||"—"}</td><td>${p.note||""}</td></tr>`;
+  }).join("") || `<tr><td colspan="6" style="color:var(--muted)">Is period mein koi payment record nahi mila.</td></tr>`;
+  const monthTotal=list.reduce((s,p)=>s+(+p.amount||0),0);
+  const allTotal=ALL_PAYMENTS.reduce((s,p)=>s+(+p.amount||0),0);
+  document.getElementById("pay-month-total").textContent="₹"+monthTotal.toLocaleString("en-IN");
+  document.getElementById("pay-all-total").textContent="₹"+allTotal.toLocaleString("en-IN");
+  document.getElementById("pay-count").textContent=ALL_PAYMENTS.length;
+}
+
+async function recordPayment(email,amount,plan,transactionId,note){
+  await db.collection("payments").add({
+    email, amount:+amount||0, plan, transactionId:transactionId||"",
+    note:note||"", createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  loadPayments();
+}
+
+function addManualPaymentRecord(){
+  const email=prompt("User ka email daalo:");
+  if(!email)return;
+  const amount=prompt("Amount kitna tha (₹)?","299");
+  if(amount===null)return;
+  const plan=prompt("Plan? (oneDayTrial / monthly / yearly)","monthly");
+  if(plan===null)return;
+  const txnId=prompt("Transaction ID (Razorpay Payments tab se copy karo, ya UPI ref number):","");
+  const note=prompt("Koi note (optional)?","");
+  recordPayment(email,amount,plan,txnId,note);
+  alert("Payment record add ho gaya. Agar is user ko access bhi dena hai to Users tab mein jaake +1mo/+1yr/+1day dabao.");
+}
+
+function exportPaymentsToExcel(){
+  if(ALL_PAYMENTS.length===0){alert("Koi payment record nahi hai export karne ke liye.");return;}
+  const rows=ALL_PAYMENTS.map(p=>({
+    "Date": p.createdAt?new Date(p.createdAt.toMillis()).toLocaleString():"—",
+    "Email": p.email||"—",
+    "Amount (₹)": p.amount||0,
+    "Plan": p.plan||"—",
+    "Transaction ID": p.transactionId||"—",
+    "Note": p.note||""
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:20},{wch:26},{wch:12},{wch:12},{wch:24},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Payments");
+  XLSX.writeFile(wb,`IS800_Payments_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 let ALL_FEEDBACK=[];
@@ -181,9 +280,9 @@ function renderUsers(){
       <td>
         ${u.dailyTrialUsed
           ? `<button disabled title="1-day trial already used once" style="opacity:.4;cursor:not-allowed;border-color:#a78bfa;color:#a78bfa">+1day (used)</button>`
-          : `<button onclick="grantAccess('${u.id}','oneDayTrial')" style="border-color:#a78bfa;color:#a78bfa">+1day</button>`}
-        <button onclick="grantAccess('${u.id}','monthly')">+1mo</button>
-        <button onclick="grantAccess('${u.id}','yearly')">+1yr</button>
+          : `<button onclick="grantAccess('${u.id}','oneDayTrial','${u.email}')" style="border-color:#a78bfa;color:#a78bfa">+1day</button>`}
+        <button onclick="grantAccess('${u.id}','monthly','${u.email}')">+1mo</button>
+        <button onclick="grantAccess('${u.id}','yearly','${u.email}')">+1yr</button>
         <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
         ${u.isAdmin?"":`<button onclick="resetAccount('${u.id}','${u.email}')" style="border-color:#fb923c;color:#fb923c">Reset Account</button>`}
       </td>`).join("");
@@ -221,12 +320,16 @@ function exportToExcel(){
   XLSX.writeFile(wb,`IS800_Beam_Users_${CURRENT_FILTER}_${dateTag}.xlsx`);
 }
 
-async function grantAccess(uid,plan){
+async function grantAccess(uid,plan,email){
   const days=plan==="oneDayTrial"?1:plan==="monthly"?30:365;
+  const defaultAmount=plan==="oneDayTrial"?1:plan==="monthly"?299:2999;
+  const txnId=prompt(`Transaction ID daalo (Razorpay Payments tab se copy karo, ya UPI ref) — is se fraud track karne mein madad milegi.\n\nAgar bina payment ke free access dena hai (goodwill), to khaali chhod ke OK dabao.`,"");
+  if(txnId===null)return; // cancelled
   const expiry=new Date(Date.now()+days*24*60*60*1000);
   const update={plan, subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)};
   if(plan==="oneDayTrial")update.dailyTrialUsed=true; // one-time only, forever — never allow granting this again
   await db.collection("users").doc(uid).update(update);
+  await recordPayment(email||"",defaultAmount,plan,txnId,txnId?"":"Free/goodwill grant by admin");
   loadUsers();
 }
 async function revokeAccess(uid){
