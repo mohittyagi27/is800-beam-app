@@ -88,7 +88,7 @@ button:hover{background:var(--accent);color:#000}
       <button class="btn-export" style="background:#38bdf8" onclick="exportPaymentsToExcel()">⬇ Export to Excel</button>
     </div>
     <table>
-      <thead><tr><th>Date</th><th>Email</th><th>Amount</th><th>Plan</th><th>Transaction ID</th><th>Note</th></tr></thead>
+      <thead><tr><th>Date</th><th>Email</th><th>Amount</th><th>Plan</th><th>Transaction ID</th><th>Status</th><th>Action / Note</th></tr></thead>
       <tbody id="payment-rows"></tbody>
     </table>
   </div>
@@ -128,24 +128,25 @@ function setAdminTab(tab){
 }
 
 let ALL_PAYMENTS=[];
-async function loadPayments(){
-  const snap=await db.collection("payments").orderBy("createdAt","desc").limit(500).get();
-  ALL_PAYMENTS=[];
-  snap.forEach(doc=>{ ALL_PAYMENTS.push(doc.data()); });
-  document.getElementById("pay-count-badge").textContent=ALL_PAYMENTS.length?`(${ALL_PAYMENTS.length})`:"";
-  // Populate month filter dropdown from actual payment months present
-  const months=new Set();
-  ALL_PAYMENTS.forEach(p=>{ if(p.createdAt){ const d=new Date(p.createdAt.toMillis()); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } });
-  const sel=document.getElementById("pay-month-filter");
-  const prevVal=sel.value;
-  const sortedMonths=[...months].sort().reverse();
-  sel.innerHTML=`<option value="all">All Months</option>`+sortedMonths.map(m=>{
-    const [y,mo]=m.split("-");
-    const label=new Date(y,mo-1,1).toLocaleString("en-US",{month:"long",year:"numeric"});
-    return `<option value="${m}">${label}</option>`;
-  }).join("");
-  sel.value=sortedMonths.includes(prevVal)?prevVal:"all";
-  renderPayments();
+function loadPayments(){
+  db.collection("payments").orderBy("createdAt","desc").limit(500).onSnapshot(snap=>{
+    ALL_PAYMENTS=[];
+    snap.forEach(doc=>{ ALL_PAYMENTS.push(Object.assign({id:doc.id},doc.data())); });
+    document.getElementById("pay-count-badge").textContent=ALL_PAYMENTS.length?`(${ALL_PAYMENTS.length})`:"";
+    // Populate month filter dropdown from actual payment months present
+    const months=new Set();
+    ALL_PAYMENTS.forEach(p=>{ if(p.createdAt){ const d=new Date(p.createdAt.toMillis()); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } });
+    const sel=document.getElementById("pay-month-filter");
+    const prevVal=sel.value;
+    const sortedMonths=[...months].sort().reverse();
+    sel.innerHTML=`<option value="all">All Months</option>`+sortedMonths.map(m=>{
+      const [y,mo]=m.split("-");
+      const label=new Date(y,mo-1,1).toLocaleString("en-US",{month:"long",year:"numeric"});
+      return `<option value="${m}">${label}</option>`;
+    }).join("");
+    sel.value=sortedMonths.includes(prevVal)?prevVal:"all";
+    renderPayments();
+  });
 }
 
 function renderPayments(){
@@ -159,8 +160,11 @@ function renderPayments(){
   const rows=document.getElementById("payment-rows");
   rows.innerHTML=list.map(p=>{
     const dateStr=p.createdAt?new Date(p.createdAt.toMillis()).toLocaleString():"—";
-    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${p.email||"—"}</td><td style="color:var(--green)">₹${p.amount||"—"}</td><td>${p.plan||"—"}</td><td style="font-size:9px">${p.transactionId||"—"}</td><td>${p.note||""}</td></tr>`;
-  }).join("") || `<tr><td colspan="6" style="color:var(--muted)">Is period mein koi payment record nahi mila.</td></tr>`;
+    const pending=p.status==="pending_verification";
+    const statusBadge=pending?`<span class="badge b-trial">⏳ PENDING</span>`:`<span class="badge b-active">✓ Approved</span>`;
+    const action=pending?`<button onclick="approvePayment('${p.id}','${p.email}','${p.plan}')" style="border-color:var(--green);color:var(--green)">✓ Approve</button>`:"";
+    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${p.email||"—"}</td><td style="color:var(--green)">₹${p.amount||"—"}</td><td>${p.plan||"—"}</td><td style="font-size:9px">${p.transactionId||"—"}</td><td>${statusBadge}</td><td>${action||p.note||""}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="color:var(--muted)">Is period mein koi payment record nahi mila.</td></tr>`;
   const monthTotal=list.reduce((s,p)=>s+(+p.amount||0),0);
   const allTotal=ALL_PAYMENTS.reduce((s,p)=>s+(+p.amount||0),0);
   document.getElementById("pay-month-total").textContent="₹"+monthTotal.toLocaleString("en-IN");
@@ -171,9 +175,23 @@ function renderPayments(){
 async function recordPayment(email,amount,plan,transactionId,note){
   await db.collection("payments").add({
     email, amount:+amount||0, plan, transactionId:transactionId||"",
-    note:note||"", createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    note:note||"", status:"approved", createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
-  loadPayments();
+}
+
+async function approvePayment(paymentDocId,email,plan){
+  if(!confirm(`Confirm karo: "${email}" ne ${plan} plan ke liye payment ki hai (Razorpay dashboard mein amount/transaction ID cross-check kar lena)?\n\nApprove karne se unka access turant activate ho jayega.`))return;
+  // Find the user's doc by email
+  const userSnap=await db.collection("users").where("email","==",email).limit(1).get();
+  if(userSnap.empty){alert("Ye email kisi registered user se match nahi hui — pehle confirm karo user ne sahi email se signup kiya hai.");return;}
+  const uid=userSnap.docs[0].id;
+  const days=plan==="oneDayTrial"?1:plan==="monthly"?30:365;
+  const expiry=new Date(Date.now()+days*24*60*60*1000);
+  const update={plan, subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)};
+  if(plan==="oneDayTrial")update.dailyTrialUsed=true;
+  await db.collection("users").doc(uid).update(update);
+  await db.collection("payments").doc(paymentDocId).update({status:"approved"});
+  alert("Access activate ho gaya! ✅");
 }
 
 function addManualPaymentRecord(){
@@ -207,46 +225,48 @@ function exportPaymentsToExcel(){
 }
 
 let ALL_FEEDBACK=[];
-async function loadFeedback(){
-  const snap=await db.collection("feedback").orderBy("createdAt","desc").limit(200).get();
-  ALL_FEEDBACK=[];
-  snap.forEach(doc=>{
-    const d=doc.data();
-    ALL_FEEDBACK.push(d);
+function loadFeedback(){
+  db.collection("feedback").orderBy("createdAt","desc").limit(200).onSnapshot(snap=>{
+    ALL_FEEDBACK=[];
+    snap.forEach(doc=>{
+      const d=doc.data();
+      ALL_FEEDBACK.push(d);
+    });
+    document.getElementById("fb-count-badge").textContent=ALL_FEEDBACK.length?`(${ALL_FEEDBACK.length})`:"";
+    const rows=document.getElementById("feedback-rows");
+    rows.innerHTML=ALL_FEEDBACK.map(f=>{
+      const dateStr=f.createdAt?new Date(f.createdAt.toMillis()).toLocaleString():"—";
+      return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${f.email||"—"}</td><td>${f.type||"—"}</td><td style="max-width:400px">${(f.message||"").replace(/</g,"&lt;")}</td></tr>`;
+    }).join("") || `<tr><td colspan="4" style="color:var(--muted)">Abhi tak koi feedback nahi aaya.</td></tr>`;
   });
-  document.getElementById("fb-count-badge").textContent=ALL_FEEDBACK.length?`(${ALL_FEEDBACK.length})`:"";
-  const rows=document.getElementById("feedback-rows");
-  rows.innerHTML=ALL_FEEDBACK.map(f=>{
-    const dateStr=f.createdAt?new Date(f.createdAt.toMillis()).toLocaleString():"—";
-    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${f.email||"—"}</td><td>${f.type||"—"}</td><td style="max-width:400px">${(f.message||"").replace(/</g,"&lt;")}</td></tr>`;
-  }).join("") || `<tr><td colspan="4" style="color:var(--muted)">Abhi tak koi feedback nahi aaya.</td></tr>`;
 }
 
 let ALL_USERS=[];
 let CURRENT_FILTER="all";
 
-async function loadUsers(){
-  const snap=await db.collection("users").orderBy("createdAt","desc").get();
-  const now=Date.now();
-  ALL_USERS=[];
-  snap.forEach(doc=>{
-    const d=doc.data(),id=doc.id;
-    const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
-    const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
-    const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
-    let statusKey,statusBadge;
-    if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
-    else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
-    else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
-    else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
-    const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
-    const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
-    ALL_USERS.push({id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
-      expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
-      dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
-      statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
+function loadUsers(){
+  db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
+    const now=Date.now();
+    ALL_USERS=[];
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
+      const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
+      const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
+      let statusKey,statusBadge;
+      if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
+      else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
+      else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
+      else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
+      const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
+      const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
+      ALL_USERS.push({id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
+        expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
+        dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
+        statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
+    });
+    renderUsers();
   });
-  renderUsers();
 }
 
 function setFilter(f){
