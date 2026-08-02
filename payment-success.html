@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Received — IS 800 Beam Design Tool</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#64748b;--green:#22c55e;--red:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:30px;width:100%;max-width:400px;text-align:center}
+.icon{font-size:40px;margin-bottom:14px}
+h1{font-size:16px;color:var(--green);letter-spacing:1px;margin-bottom:12px}
+p{font-size:11px;color:#94a3b8;line-height:1.7;margin-bottom:10px}
+.txn-box{background:#0b1120;border:1px solid #334155;border-radius:6px;padding:10px;font-size:10px;color:#6ee7b7;word-break:break-all;margin:14px 0}
+button,a.btn{display:inline-block;width:100%;padding:11px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px;margin-top:10px;text-decoration:none;box-sizing:border-box}
+.err{color:var(--red);font-size:11px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="icon">⏳</div>
+  <h1>PROCESSING...</h1>
+  <p>Payment details check kar rahe hain...</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+function render(html){document.getElementById("card").innerHTML=html;}
+
+const params = new URLSearchParams(window.location.search);
+const paymentId = params.get("razorpay_payment_id") || params.get("payment_id");
+const plan = params.get("plan") || "monthly";
+const planLabels = {oneDayTrial:"1-Day Trial (₹1)", monthly:"Monthly (₹299)", yearly:"Yearly (₹2999)"};
+const planAmounts = {oneDayTrial:1, monthly:299, yearly:2999};
+
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    render(`<div class="icon">⚠️</div><h1 style="color:#f59e0b">LOGIN ZAROORI HAI</h1><p>Pehle app mein login karo, phir payment karo taaki hum aapko pehchan sakein.</p><a class="btn" href="login.html">GO TO LOGIN</a>`);
+    return;
+  }
+  if (!paymentId) {
+    render(`<div class="icon">⚠️</div><h1 style="color:#f59e0b">TRANSACTION ID NAHI MILI</h1><p>Lagta hai is link ko seedha khola gaya (payment ke baad redirect se nahi aaye). Agar aapne payment ki hai, apna email aur payment screenshot WhatsApp par bhej dein.</p><a class="btn" href="index.html">BACK TO APP</a>`);
+    return;
+  }
+  try {
+    await db.collection("payments").add({
+      email: user.email,
+      uid: user.uid,
+      amount: planAmounts[plan] || 0,
+      plan: plan,
+      transactionId: paymentId,
+      note: "Auto-captured from redirect — pending admin approval",
+      status: "pending_verification",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    render(`
+      <div class="icon">✅</div>
+      <h1>PAYMENT RECEIVED!</h1>
+      <p>Plan: <b style="color:#e2e8f0">${planLabels[plan] || plan}</b></p>
+      <div class="txn-box">Transaction ID:<br>${paymentId}</div>
+      <p>Ye record admin ke paas verification ke liye chala gaya hai. Thodi der mein (verify hone ke baad) aapka access activate ho jayega.</p>
+      <a class="btn" href="index.html">BACK TO APP</a>
+    `);
+  } catch (e) {
+    render(`<div class="icon">⚠️</div><h1 style="color:#ef4444">KUCH GALAT HO GAYA</h1><p>Apna email aur Transaction ID (${paymentId}) WhatsApp par bhej dein taaki manually verify ho sake.</p><a class="btn" href="index.html">BACK TO APP</a>`);
+  }
+});
+</script>
+</body>
+</html>
