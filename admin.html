@@ -1,75 +1,399 @@
-const CACHE_NAME = "is800-beam-checker-v17";
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./login.html",
-  "./signup.html",
-  "./admin.html",
-  "./help.html",
-  "./feedback.html",
-  "./payment-success.html",
-  "./pay-daily.html",
-  "./pay-monthly.html",
-  "./pay-yearly.html",
-  "./firebase-config.js",
-  "./auth-guard.js",
-  "./translations.js",
-  "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png"
-];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — IS 800 Beam Design Tool</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#64748b;--red:#ef4444;--green:#22c55e;--gold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;padding:16px}
+h1{font-size:16px;color:var(--accent);letter-spacing:2px;margin-bottom:14px}
+#gate{max-width:360px;margin:80px auto;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:11px;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th{background:#0b1120;color:var(--muted);padding:8px;text-align:left;font-size:10px;letter-spacing:1px}
+td{padding:8px;border-top:1px solid var(--border)}
+.badge{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:bold}
+.b-trial{background:#1e3050;color:var(--accent)}
+.b-active{background:#052e16;color:var(--green)}
+.b-expired{background:#1c0a0a;color:var(--red)}
+.b-admin{background:#3b1e5c;color:#c4b5fd}
+select,input{background:#0b1120;border:1px solid #334155;color:var(--text);padding:4px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:10px}
+button{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-family:'Courier New',monospace}
+button:hover{background:var(--accent);color:#000}
+.stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 16px}
+.stat .l{font-size:9px;color:var(--muted)}
+.stat .v{font-size:18px;font-weight:bold;color:var(--accent)}
+.filter-btn{background:transparent;border:1px solid #334155;color:#94a3b8;padding:6px 12px;border-radius:20px;font-size:10px;cursor:pointer;font-family:'Courier New',monospace}
+.filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:bold}
+.filter-btn:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+#search-box{padding:6px 10px;border-radius:20px}
+.btn-export{background:var(--green);color:#000;border:none;padding:6px 14px;border-radius:20px;font-size:10px;font-weight:bold;cursor:pointer;font-family:'Courier New',monospace}
+.btn-export:hover{opacity:.85}
+</style>
+</head>
+<body>
 
-self.addEventListener("install", (e) => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-});
+<div id="gate">
+  <h1>⚙ ADMIN — CHECKING ACCESS…</h1>
+</div>
 
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
+<div id="dashboard" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h1>⚙ ADMIN DASHBOARD</h1>
+    <a href="index.html" style="color:var(--accent);text-decoration:none;font-size:11px;border:1px solid var(--accent);padding:6px 12px;border-radius:6px">🏠 Home</a>
+  </div>
+  <div style="display:flex;gap:8px;margin:14px 0" id="admin-tabs">
+    <button class="filter-btn admin-tab-btn active" data-tab="users" onclick="setAdminTab('users')">👤 Users</button>
+    <button class="filter-btn admin-tab-btn" data-tab="payments" onclick="setAdminTab('payments')">💰 Payments <span id="pay-count-badge"></span></button>
+    <button class="filter-btn admin-tab-btn" data-tab="feedback" onclick="setAdminTab('feedback')">💬 Feedback <span id="fb-count-badge"></span></button>
+  </div>
+  <div id="users-panel">
+    <div class="stats">
+      <div class="stat"><div class="l">TOTAL USERS</div><div class="v" id="st-total">—</div></div>
+      <div class="stat"><div class="l">🟢 CURRENTLY ONLINE</div><div class="v" id="st-online" style="color:#22c55e">—</div></div>
+      <div class="stat"><div class="l">ACTIVE SUBSCRIBERS</div><div class="v" id="st-active">—</div></div>
+      <div class="stat"><div class="l">ON TRIAL</div><div class="v" id="st-trial">—</div></div>
+      <div class="stat"><div class="l">TRIAL EXPIRED (NOT PAID)</div><div class="v" id="st-expired">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap" id="filter-bar">
+      <button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-f="active" onclick="setFilter('active')">✅ Paid / Active</button>
+      <button class="filter-btn" data-f="trial" onclick="setFilter('trial')">On Trial</button>
+      <button class="filter-btn" data-f="expired" onclick="setFilter('expired')">⚠ Not Paid (Trial Used)</button>
+      <input type="text" id="search-box" placeholder="Search email..." oninput="renderUsers()" style="margin-left:auto;min-width:180px">
+      <button class="btn-export" onclick="exportToExcel()">⬇ Export to Excel</button>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-bottom:10px;line-height:1.5">
+      ℹ️ "Reset Account" wipes usage/plan back to a fresh trial (login stays the same — the person does NOT need to sign up again). Fully deleting the login itself so the exact same email could be re-registered from scratch needs a backend and isn't available yet.
+    </div>
+    <table>
+      <thead><tr><th>Email</th><th>Phone</th><th>Status</th><th>Uses</th><th>Plan</th><th>Expiry</th><th>Actions</th></tr></thead>
+      <tbody id="user-rows"></tbody>
+    </table>
+  </div>
 
-// NETWORK-FIRST for HTML and JS (the files that change often): always try
-// to fetch the latest version first. Only fall back to the cached copy if
-// the network request fails (i.e. the device is offline). This guarantees
-// that whenever the user is online, they always see the newest deployed
-// version — no more stuck-on-old-version caching issues after an update.
-// Images/icons/manifest stay cache-first since they rarely change and
-// benefit more from instant loading.
-const NETWORK_FIRST_EXT = [".html", ".js", ".json"];
+  <div id="payments-panel" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="l">THIS MONTH TOTAL</div><div class="v" id="pay-month-total" style="color:var(--green)">—</div></div>
+      <div class="stat"><div class="l">ALL-TIME TOTAL</div><div class="v" id="pay-all-total" style="color:var(--green)">—</div></div>
+      <div class="stat"><div class="l">TOTAL PAYMENTS</div><div class="v" id="pay-count">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <select id="pay-month-filter" onchange="renderPayments()" style="padding:6px 10px;border-radius:6px"></select>
+      <input type="text" id="pay-search-box" placeholder="Search by email..." oninput="renderPayments()" style="padding:6px 10px;border-radius:6px;min-width:180px">
+      <button class="btn-export" onclick="addManualPaymentRecord()">+ Add Payment Record</button>
+      <button class="btn-export" style="background:#38bdf8" onclick="exportPaymentsToExcel()">⬇ Export to Excel</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Amount</th><th>Plan</th><th>Transaction ID</th><th>Status</th><th>Action / Note</th></tr></thead>
+      <tbody id="payment-rows"></tbody>
+    </table>
+  </div>
 
-self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  const url = e.request.url;
-  const isNetworkFirst = NETWORK_FIRST_EXT.some((ext) => url.includes(ext)) || url.endsWith("/");
+  <div id="feedback-panel" style="display:none">
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Type</th><th>Message</th></tr></thead>
+      <tbody id="feedback-rows"></tbody>
+    </table>
+  </div>
+</div>
 
-  if (isNetworkFirst) {
-    e.respondWith(
-      fetch(e.request)
-        .then((res) => {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
-  } else {
-    e.respondWith(
-      caches.match(e.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(e.request).then((res) => {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
-          return res;
-        });
-      })
-    );
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+auth.onAuthStateChanged(async user=>{
+  if(!user){window.location.href="login.html";return;}
+  if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
+    document.getElementById("gate").innerHTML="<h1 style='color:var(--red)'>⛔ ACCESS DENIED</h1><p style='color:var(--muted);font-size:11px;margin-top:8px'>Ye page sirf admin ke liye hai.</p>";
+    return;
   }
+  document.getElementById("gate").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  loadUsers();
+  loadFeedback();
+  loadPayments();
 });
+
+function setAdminTab(tab){
+  document.querySelectorAll(".admin-tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.getElementById("users-panel").style.display=tab==="users"?"block":"none";
+  document.getElementById("payments-panel").style.display=tab==="payments"?"block":"none";
+  document.getElementById("feedback-panel").style.display=tab==="feedback"?"block":"none";
+}
+
+let ALL_PAYMENTS=[];
+function loadPayments(){
+  db.collection("payments").orderBy("createdAt","desc").limit(500).onSnapshot(snap=>{
+    ALL_PAYMENTS=[];
+    snap.forEach(doc=>{ ALL_PAYMENTS.push(Object.assign({id:doc.id},doc.data())); });
+    document.getElementById("pay-count-badge").textContent=ALL_PAYMENTS.length?`(${ALL_PAYMENTS.length})`:"";
+    // Populate month filter dropdown from actual payment months present
+    const months=new Set();
+    ALL_PAYMENTS.forEach(p=>{ if(p.createdAt){ const d=new Date(p.createdAt.toMillis()); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } });
+    const sel=document.getElementById("pay-month-filter");
+    const prevVal=sel.value;
+    const sortedMonths=[...months].sort().reverse();
+    sel.innerHTML=`<option value="all">All Months</option>`+sortedMonths.map(m=>{
+      const [y,mo]=m.split("-");
+      const label=new Date(y,mo-1,1).toLocaleString("en-US",{month:"long",year:"numeric"});
+      return `<option value="${m}">${label}</option>`;
+    }).join("");
+    sel.value=sortedMonths.includes(prevVal)?prevVal:"all";
+    renderPayments();
+  });
+}
+
+function renderPayments(){
+  const filterMonth=document.getElementById("pay-month-filter").value;
+  const searchQ=(document.getElementById("pay-search-box").value||"").trim().toLowerCase();
+  const list=ALL_PAYMENTS.filter(p=>{
+    if(filterMonth!=="all"&&p.createdAt){
+      const d=new Date(p.createdAt.toMillis());
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      if(key!==filterMonth)return false;
+    }
+    if(searchQ&&!(p.email||"").toLowerCase().includes(searchQ))return false;
+    return true;
+  });
+  const rows=document.getElementById("payment-rows");
+  rows.innerHTML=list.map(p=>{
+    const dateStr=p.createdAt?new Date(p.createdAt.toMillis()).toLocaleString():"—";
+    const pending=p.status==="pending_verification";
+    const statusBadge=pending?`<span class="badge b-trial">⏳ PENDING</span>`:`<span class="badge b-active">✓ Approved</span>`;
+    const action=pending?`<button onclick="approvePayment('${p.id}','${p.email}','${p.plan}')" style="border-color:var(--green);color:var(--green)">✓ Approve</button>`:"";
+    return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${p.email||"—"}</td><td style="color:var(--green)">₹${p.amount||"—"}</td><td>${p.plan||"—"}</td><td style="font-size:9px">${p.transactionId||"—"}</td><td>${statusBadge}</td><td>${action||p.note||""}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="color:var(--muted)">Is period mein koi payment record nahi mila.</td></tr>`;
+  const monthTotal=list.reduce((s,p)=>s+(+p.amount||0),0);
+  const allTotal=ALL_PAYMENTS.reduce((s,p)=>s+(+p.amount||0),0);
+  document.getElementById("pay-month-total").textContent="₹"+monthTotal.toLocaleString("en-IN");
+  document.getElementById("pay-all-total").textContent="₹"+allTotal.toLocaleString("en-IN");
+  document.getElementById("pay-count").textContent=ALL_PAYMENTS.length;
+}
+
+async function recordPayment(email,amount,plan,transactionId,note){
+  await db.collection("payments").add({
+    email, amount:+amount||0, plan, transactionId:transactionId||"",
+    note:note||"", status:"approved", createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function approvePayment(paymentDocId,email,plan){
+  if(!confirm(`Confirm karo: "${email}" ne ${plan} plan ke liye payment ki hai (Razorpay dashboard mein amount/transaction ID cross-check kar lena)?\n\nApprove karne se unka access turant activate ho jayega.`))return;
+  // Find the user's doc by email
+  const userSnap=await db.collection("users").where("email","==",email).limit(1).get();
+  if(userSnap.empty){alert("Ye email kisi registered user se match nahi hui — pehle confirm karo user ne sahi email se signup kiya hai.");return;}
+  const uid=userSnap.docs[0].id;
+  const days=plan==="oneDayTrial"?1:plan==="monthly"?30:365;
+  const expiry=new Date(Date.now()+days*24*60*60*1000);
+  const update={plan, subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)};
+  if(plan==="oneDayTrial")update.dailyTrialUsed=true;
+  await db.collection("users").doc(uid).update(update);
+  await db.collection("payments").doc(paymentDocId).update({status:"approved"});
+  alert("Access activate ho gaya! ✅");
+}
+
+function addManualPaymentRecord(){
+  const email=prompt("User ka email daalo:");
+  if(!email)return;
+  const amount=prompt("Amount kitna tha (₹)?","299");
+  if(amount===null)return;
+  const plan=prompt("Plan? (oneDayTrial / monthly / yearly)","monthly");
+  if(plan===null)return;
+  const txnId=prompt("Transaction ID (Razorpay Payments tab se copy karo, ya UPI ref number):","");
+  const note=prompt("Koi note (optional)?","");
+  recordPayment(email,amount,plan,txnId,note);
+  alert("Payment record add ho gaya. Agar is user ko access bhi dena hai to Users tab mein jaake +1mo/+1yr/+1day dabao.");
+}
+
+function exportPaymentsToExcel(){
+  if(ALL_PAYMENTS.length===0){alert("Koi payment record nahi hai export karne ke liye.");return;}
+  const rows=ALL_PAYMENTS.map(p=>({
+    "Date": p.createdAt?new Date(p.createdAt.toMillis()).toLocaleString():"—",
+    "Email": p.email||"—",
+    "Amount (₹)": p.amount||0,
+    "Plan": p.plan||"—",
+    "Transaction ID": p.transactionId||"—",
+    "Note": p.note||""
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:20},{wch:26},{wch:12},{wch:12},{wch:24},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Payments");
+  XLSX.writeFile(wb,`IS800_Payments_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+let ALL_FEEDBACK=[];
+function loadFeedback(){
+  db.collection("feedback").orderBy("createdAt","desc").limit(200).onSnapshot(snap=>{
+    ALL_FEEDBACK=[];
+    snap.forEach(doc=>{
+      const d=doc.data();
+      ALL_FEEDBACK.push(d);
+    });
+    document.getElementById("fb-count-badge").textContent=ALL_FEEDBACK.length?`(${ALL_FEEDBACK.length})`:"";
+    const rows=document.getElementById("feedback-rows");
+    rows.innerHTML=ALL_FEEDBACK.map(f=>{
+      const dateStr=f.createdAt?new Date(f.createdAt.toMillis()).toLocaleString():"—";
+      return `<tr><td style="white-space:nowrap">${dateStr}</td><td>${f.email||"—"}</td><td>${f.type||"—"}</td><td style="max-width:400px">${(f.message||"").replace(/</g,"&lt;")}</td></tr>`;
+    }).join("") || `<tr><td colspan="4" style="color:var(--muted)">Abhi tak koi feedback nahi aaya.</td></tr>`;
+  });
+}
+
+let ALL_USERS=[];
+let CURRENT_FILTER="all";
+
+let RAW_USER_DOCS=[];
+function loadUsers(){
+  db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
+    RAW_USER_DOCS=[];
+    snap.forEach(doc=>{ RAW_USER_DOCS.push({id:doc.id,d:doc.data()}); });
+    computeUsers();
+  });
+  // Re-compute every 20s even if nothing changed in Firestore — this is
+  // what makes expiry (and "online" status) turn off automatically as time
+  // passes, instead of only updating when a new write happens to trigger
+  // the snapshot listener above.
+  setInterval(computeUsers,20000);
+}
+
+function computeUsers(){
+  const now=Date.now();
+  ALL_USERS=RAW_USER_DOCS.map(({id,d})=>{
+    const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
+    const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
+    const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
+    let statusKey,statusBadge;
+    if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
+    else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
+    else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
+    else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
+    const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
+    const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
+    return {id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
+      expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
+      dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
+      statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""};
+  });
+  renderUsers();
+}
+
+function viewUserHistory(email){
+  setAdminTab("payments");
+  document.getElementById("pay-search-box").value=email;
+  document.getElementById("pay-month-filter").value="all";
+  renderPayments();
+}
+
+function setFilter(f){
+  CURRENT_FILTER=f;
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.f===f));
+  renderUsers();
+}
+
+function getFilteredUsers(){
+  const q=(document.getElementById("search-box").value||"").trim().toLowerCase();
+  return ALL_USERS.filter(u=>{
+    if(CURRENT_FILTER==="active"&&u.statusKey!=="active")return false;
+    if(CURRENT_FILTER==="trial"&&u.statusKey!=="trial")return false;
+    if(CURRENT_FILTER==="expired"&&u.statusKey!=="expired")return false;
+    if(q&&!u.email.toLowerCase().includes(q))return false;
+    return true;
+  });
+}
+
+function renderUsers(){
+  const list=getFilteredUsers();
+  const rows=document.getElementById("user-rows");
+  rows.innerHTML=list.map(u=>`
+    <tr>
+      <td>${u.isOnline?'<span style="color:#22c55e" title="Online (active in last 2 min)">●</span> ':'<span style="color:#374151">●</span> '}${u.email}</td>
+      <td>${u.phone}${u.phoneVerified?' <span style="color:var(--green)">✓</span>':''}</td>
+      <td>${u.statusBadge}</td>
+      <td>${u.usageCount} / ${FREE_TRIAL_USES}</td>
+      <td>${u.plan}</td>
+      <td>${u.expiryStr}</td>
+      <td>
+        ${u.dailyTrialUsed
+          ? `<button disabled title="1-day trial already used once" style="opacity:.4;cursor:not-allowed;border-color:#a78bfa;color:#a78bfa">+1day (used)</button>`
+          : `<button onclick="grantAccess('${u.id}','oneDayTrial','${u.email}')" style="border-color:#a78bfa;color:#a78bfa">+1day</button>`}
+        <button onclick="grantAccess('${u.id}','monthly','${u.email}')">+1mo</button>
+        <button onclick="grantAccess('${u.id}','yearly','${u.email}')">+1yr</button>
+        <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
+        <button onclick="viewUserHistory('${u.email}')" style="border-color:#38bdf8;color:#38bdf8">📜 History</button>
+        ${u.isAdmin?"":`<button onclick="resetAccount('${u.id}','${u.email}')" style="border-color:#fb923c;color:#fb923c">Reset Account</button>`}
+      </td>`).join("");
+  // Stats always reflect the FULL user base, not the current filter/search.
+  const total=ALL_USERS.length;
+  const online=ALL_USERS.filter(u=>u.isOnline).length;
+  const active=ALL_USERS.filter(u=>u.statusKey==="active").length;
+  const trial=ALL_USERS.filter(u=>u.statusKey==="trial").length;
+  const expired=ALL_USERS.filter(u=>u.statusKey==="expired").length;
+  document.getElementById("st-total").textContent=total;
+  document.getElementById("st-online").textContent=online;
+  document.getElementById("st-active").textContent=active;
+  document.getElementById("st-trial").textContent=trial;
+  document.getElementById("st-expired").textContent=expired;
+}
+
+function exportToExcel(){
+  const list=getFilteredUsers(); // exports whatever filter/search is currently applied
+  if(list.length===0){alert("Export karne ke liye koi user nahi mila (current filter/search ke saath).");return;}
+  const statusLabel={admin:"Admin",active:"Paid / Active",trial:"On Trial",expired:"Trial Used — Not Paid"};
+  const rows=list.map(u=>({
+    "Email":u.email,
+    "Phone":u.phone,
+    "Status":statusLabel[u.statusKey]||u.statusKey,
+    "Uses":`${u.usageCount} / ${FREE_TRIAL_USES}`,
+    "Plan":u.plan,
+    "Subscription Expiry":u.expiryStr,
+    "Last Payment ID":u.lastPaymentId
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:28},{wch:16},{wch:22},{wch:10},{wch:12},{wch:18},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Users");
+  const dateTag=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`IS800_Beam_Users_${CURRENT_FILTER}_${dateTag}.xlsx`);
+}
+
+async function grantAccess(uid,plan,email){
+  const days=plan==="oneDayTrial"?1:plan==="monthly"?30:365;
+  const defaultAmount=plan==="oneDayTrial"?1:plan==="monthly"?299:2999;
+  const txnId=prompt(`Transaction ID daalo (Razorpay Payments tab se copy karo, ya UPI ref) — is se fraud track karne mein madad milegi.\n\nAgar bina payment ke free access dena hai (goodwill), to khaali chhod ke OK dabao.`,"");
+  if(txnId===null)return; // cancelled
+  const expiry=new Date(Date.now()+days*24*60*60*1000);
+  const update={plan, subscriptionExpiry: firebase.firestore.Timestamp.fromDate(expiry)};
+  if(plan==="oneDayTrial")update.dailyTrialUsed=true; // one-time only, forever — never allow granting this again
+  await db.collection("users").doc(uid).update(update);
+  await recordPayment(email||"",defaultAmount,plan,txnId,txnId?"":"Free/goodwill grant by admin");
+  loadUsers();
+}
+async function revokeAccess(uid){
+  if(!confirm("Is user ka access revoke karna hai (wapas trial-only ho jayega)?"))return;
+  await db.collection("users").doc(uid).update({
+    plan:"trial",
+    subscriptionExpiry:null
+  });
+  loadUsers();
+}
+async function resetAccount(uid,email){
+  if(!confirm(`"${email}" ka account reset karna hai?\n\nYe unka usage count, plan, aur trial history WIPE kar dega — jaise unhone abhi-abhi naya account banaya ho. Unka LOGIN (email/password) same rahega, unhe dobara signup nahi karna padega.`))return;
+  await db.collection("users").doc(uid).update({
+    usageCount:0,
+    plan:"trial",
+    subscriptionExpiry:null,
+    dailyTrialUsed:false
+  });
+  loadUsers();
+  alert("Account reset ho gaya — user ab fresh trial ke sath login kar sakta hai.");
+}
+</script>
+</body>
+</html>
