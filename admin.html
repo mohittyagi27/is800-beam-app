@@ -84,6 +84,7 @@ button:hover{background:var(--accent);color:#000}
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <select id="pay-month-filter" onchange="renderPayments()" style="padding:6px 10px;border-radius:6px"></select>
+      <input type="text" id="pay-search-box" placeholder="Search by email..." oninput="renderPayments()" style="padding:6px 10px;border-radius:6px;min-width:180px">
       <button class="btn-export" onclick="addManualPaymentRecord()">+ Add Payment Record</button>
       <button class="btn-export" style="background:#38bdf8" onclick="exportPaymentsToExcel()">⬇ Export to Excel</button>
     </div>
@@ -151,11 +152,15 @@ function loadPayments(){
 
 function renderPayments(){
   const filterMonth=document.getElementById("pay-month-filter").value;
+  const searchQ=(document.getElementById("pay-search-box").value||"").trim().toLowerCase();
   const list=ALL_PAYMENTS.filter(p=>{
-    if(filterMonth==="all"||!p.createdAt)return true;
-    const d=new Date(p.createdAt.toMillis());
-    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-    return key===filterMonth;
+    if(filterMonth!=="all"&&p.createdAt){
+      const d=new Date(p.createdAt.toMillis());
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      if(key!==filterMonth)return false;
+    }
+    if(searchQ&&!(p.email||"").toLowerCase().includes(searchQ))return false;
+    return true;
   });
   const rows=document.getElementById("payment-rows");
   rows.innerHTML=list.map(p=>{
@@ -244,29 +249,46 @@ function loadFeedback(){
 let ALL_USERS=[];
 let CURRENT_FILTER="all";
 
+let RAW_USER_DOCS=[];
 function loadUsers(){
   db.collection("users").orderBy("createdAt","desc").onSnapshot(snap=>{
-    const now=Date.now();
-    ALL_USERS=[];
-    snap.forEach(doc=>{
-      const d=doc.data(),id=doc.id;
-      const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
-      const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
-      const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
-      let statusKey,statusBadge;
-      if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
-      else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
-      else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
-      else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
-      const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
-      const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
-      ALL_USERS.push({id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
-        expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
-        dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
-        statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""});
-    });
-    renderUsers();
+    RAW_USER_DOCS=[];
+    snap.forEach(doc=>{ RAW_USER_DOCS.push({id:doc.id,d:doc.data()}); });
+    computeUsers();
   });
+  // Re-compute every 20s even if nothing changed in Firestore — this is
+  // what makes expiry (and "online" status) turn off automatically as time
+  // passes, instead of only updating when a new write happens to trigger
+  // the snapshot listener above.
+  setInterval(computeUsers,20000);
+}
+
+function computeUsers(){
+  const now=Date.now();
+  ALL_USERS=RAW_USER_DOCS.map(({id,d})=>{
+    const expiryMs=d.subscriptionExpiry?d.subscriptionExpiry.toMillis():null;
+    const isActive=(d.plan==="oneDayTrial"||d.plan==="monthly"||d.plan==="yearly")&&expiryMs&&expiryMs>now;
+    const usedUp=(d.usageCount||0)>=FREE_TRIAL_USES && !isActive;
+    let statusKey,statusBadge;
+    if(d.isAdmin){statusKey="admin";statusBadge=`<span class="badge b-admin">ADMIN</span>`;}
+    else if(isActive){statusKey="active";statusBadge=`<span class="badge b-active">ACTIVE — ${d.plan}</span>`;}
+    else if(usedUp){statusKey="expired";statusBadge=`<span class="badge b-expired">TRIAL USED — NOT PAID</span>`;}
+    else{statusKey="trial";statusBadge=`<span class="badge b-trial">ON TRIAL</span>`;}
+    const lastActiveMs=d.lastActive?d.lastActive.toMillis():null;
+    const isOnline=lastActiveMs && (now-lastActiveMs)<120000; // active within last 2 min
+    return {id,email:d.email,phone:d.phone||"—",phoneVerified:!!d.phoneVerified,usageCount:d.usageCount||0,plan:d.plan||"trial",
+      expiryMs,expiryStr:expiryMs?new Date(expiryMs).toLocaleDateString():"—",
+      dailyTrialUsed:!!d.dailyTrialUsed,isOnline,
+      statusKey,statusBadge,isAdmin:!!d.isAdmin,lastPaymentId:d.lastPaymentId||""};
+  });
+  renderUsers();
+}
+
+function viewUserHistory(email){
+  setAdminTab("payments");
+  document.getElementById("pay-search-box").value=email;
+  document.getElementById("pay-month-filter").value="all";
+  renderPayments();
 }
 
 function setFilter(f){
@@ -304,6 +326,7 @@ function renderUsers(){
         <button onclick="grantAccess('${u.id}','monthly','${u.email}')">+1mo</button>
         <button onclick="grantAccess('${u.id}','yearly','${u.email}')">+1yr</button>
         <button onclick="revokeAccess('${u.id}')" style="border-color:var(--red);color:var(--red)">Revoke</button>
+        <button onclick="viewUserHistory('${u.email}')" style="border-color:#38bdf8;color:#38bdf8">📜 History</button>
         ${u.isAdmin?"":`<button onclick="resetAccount('${u.id}','${u.email}')" style="border-color:#fb923c;color:#fb923c">Reset Account</button>`}
       </td>`).join("");
   // Stats always reflect the FULL user base, not the current filter/search.
