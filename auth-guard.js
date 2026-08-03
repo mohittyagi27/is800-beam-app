@@ -24,32 +24,36 @@ function isSubscriptionActive(d){
 
 function showPaywall(dailyTrialUsed){
   const dailyBtn = dailyTrialUsed
-    ? `<div style="width:100%;padding:11px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;margin-bottom:8px;box-sizing:border-box">${t("pw_trial_used")}</div>`
-    : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:11px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">${t("pw_try_day")}</a>`;
+    ? `<div style="width:100%;padding:9px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:10px;margin-bottom:6px;box-sizing:border-box">${t("pw_trial_used")}</div>`
+    : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:9px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;margin-bottom:6px;text-decoration:none;box-sizing:border-box">${t("pw_try_day")}</a>`;
+  const upiUri="upi://pay?pa="+encodeURIComponent(UPI_ID)+"&pn="+encodeURIComponent("IS800 Beam Tool")+"&cu=INR";
+  const qrImgUrl="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data="+encodeURIComponent(upiUri);
   ov(`
-    <div style="max-width:380px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:26px;text-align:center">
+    <div style="max-width:400px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:24px;text-align:center;max-height:90vh;overflow-y:auto">
       <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">${t("pw_title")}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:18px;line-height:1.6;white-space:pre-line">${t("pw_sub",{n:FREE_TRIAL_USES})}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:16px;line-height:1.6;white-space:pre-line">${t("pw_sub",{n:FREE_TRIAL_USES})}</div>
 
+      <div style="background:#052e16;border:2px solid #22c55e;border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;color:#6ee7b7;font-weight:bold;margin-bottom:10px">⭐ PAY VIA UPI (RECOMMENDED)</div>
+        <img src="${qrImgUrl}" alt="UPI QR Code" style="width:150px;height:150px;border-radius:8px;background:#fff;padding:6px;margin-bottom:10px">
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:6px">Scan karo, ya seedha bhejo:</div>
+        <div style="font-size:14px;color:#22c55e;font-weight:bold;letter-spacing:.5px;user-select:all;background:#0b1120;border-radius:6px;padding:8px;margin-bottom:8px">${UPI_ID}</div>
+        <div style="font-size:9px;color:#94a3b8;line-height:1.5">Monthly ₹299 · Yearly ₹2999 · 1-Day Trial ₹1<br>Payment ke baad email+screenshot WhatsApp par bhejo:<br>
+        <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">+91 ${SUPPORT_WHATSAPP.slice(2)}</a></div>
+      </div>
+
+      <div style="font-size:9px;color:#64748b;margin-bottom:10px">— ya card/netbanking se pay karo (Razorpay) —</div>
       ${dailyBtn}
-      <a href="${PAYMENT_LINKS.monthly}" target="_blank" style="display:block;width:100%;padding:11px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:8px;text-decoration:none;box-sizing:border-box">
+      <a href="${PAYMENT_LINKS.monthly}" target="_blank" style="display:block;width:100%;padding:9px;background:#38bdf8;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;margin-bottom:6px;text-decoration:none;box-sizing:border-box">
         ${t("pw_monthly")}
       </a>
-      <a href="${PAYMENT_LINKS.yearly}" target="_blank" style="display:block;width:100%;padding:11px;background:#f59e0b;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:16px">
+      <a href="${PAYMENT_LINKS.yearly}" target="_blank" style="display:block;width:100%;padding:9px;background:#f59e0b;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:12px">
         ${t("pw_yearly")}
       </a>
 
-      <div style="font-size:9px;color:#64748b;line-height:1.6;border-top:1px solid #1e3050;padding-top:12px">
-        ${t("pw_afterpay")} <b style="color:#94a3b8">${t("pw_email_word")}</b> ${t("pw_and")} <b style="color:#94a3b8">${t("pw_screenshot_word")}</b> ${t("pw_via_whatsapp")}<br>
-        <a href="https://wa.me/${SUPPORT_WHATSAPP}" target="_blank" style="color:#38bdf8;text-decoration:none">WhatsApp: +91 ${SUPPORT_WHATSAPP.slice(2)}</a><br>
-        ${t("pw_activate_note")}
-      </div>
+      <div style="font-size:9px;color:#64748b;line-height:1.5">${t("pw_activate_note")}</div>
 
-      <div style="font-size:9px;color:#64748b;margin-top:10px">
-        ${t("pw_or_upi")} <span style="color:#22c55e;font-weight:bold;user-select:all">${UPI_ID}</span>
-      </div>
-
-      <div style="font-size:10px;color:#64748b;margin-top:16px">
+      <div style="font-size:10px;color:#64748b;margin-top:14px">
         <a href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;" style="color:#64748b">${t("logout")}</a>
       </div>
     </div>
@@ -148,6 +152,25 @@ async function refreshUserDataAndGate(){
   return{active,usesLeft,isAdmin:d.isAdmin};
 }
 
+// Real-time watch: if the admin grants access (or anything else about this
+// user's doc changes) while the app/paywall is open, reflect it instantly —
+// no manual refresh needed.
+function startRealtimeUserWatch(){
+  db.collection("users").doc(CURRENT_UID).onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const d=snap.data();
+    CURRENT_USER_DATA=d;
+    const active=isSubscriptionActive(d);
+    const usesLeft=Math.max(0,FREE_TRIAL_USES-(d.usageCount||0));
+    injectTopBar(d.email,usesLeft,active,d.isAdmin);
+    if(d.isAdmin||active||usesLeft>0){
+      hideOverlay();
+    }else{
+      showPaywall(!!d.dailyTrialUsed);
+    }
+  });
+}
+
 async function consumeOneUse(){
   if(!CURRENT_UID)return false;
   const status=await refreshUserDataAndGate();
@@ -167,6 +190,21 @@ function startPresenceHeartbeat(){
   };
   beat();
   setInterval(beat,30000);
+}
+
+// Re-evaluate access every 20s using the already-cached user data (no
+// extra Firestore read needed) — this is what makes a subscription's
+// paywall re-appear automatically the moment it expires, even if nothing
+// else changed in Firestore in the meantime.
+function startExpiryWatch(){
+  setInterval(()=>{
+    if(!CURRENT_USER_DATA)return;
+    const active=isSubscriptionActive(CURRENT_USER_DATA);
+    const usesLeft=Math.max(0,FREE_TRIAL_USES-(CURRENT_USER_DATA.usageCount||0));
+    if(!CURRENT_USER_DATA.isAdmin && !active && usesLeft<=0){
+      showPaywall(!!CURRENT_USER_DATA.dailyTrialUsed);
+    }
+  },20000);
 }
 
 // NOTE: automatic in-app checkout (startPayment) was removed — Razorpay now
@@ -191,7 +229,9 @@ auth.onAuthStateChanged(async user=>{
   CURRENT_UID=user.uid;
   showLoading("LOADING ACCOUNT...");
   await refreshUserDataAndGate();
+  startRealtimeUserWatch();
   startPresenceHeartbeat();
+  startExpiryWatch();
 
   // Gate the main "CALCULATE ALL CHECKS" button — each explicit click
   // consumes one trial use (subscribed/admin users are unaffected).
