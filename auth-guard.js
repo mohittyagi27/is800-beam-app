@@ -27,7 +27,6 @@ function showPaywall(dailyTrialUsed){
     ? `<div style="width:100%;padding:9px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:10px;margin-bottom:6px;box-sizing:border-box">${t("pw_trial_used")}</div>`
     : `<a href="${PAYMENT_LINKS.oneDayTrial}" target="_blank" style="display:block;width:100%;padding:9px;background:#a78bfa;border:none;border-radius:6px;color:#000;font-weight:bold;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;margin-bottom:6px;text-decoration:none;box-sizing:border-box">${t("pw_try_day")}</a>`;
   const upiUri="upi://pay?pa="+encodeURIComponent(UPI_ID)+"&pn="+encodeURIComponent("IS800 Beam Tool")+"&cu=INR";
-  const qrImgUrl="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data="+encodeURIComponent(upiUri);
   ov(`
     <div style="max-width:400px;background:#111827;border:1px solid #1e3050;border-radius:10px;padding:24px;text-align:center;max-height:90vh;overflow-y:auto">
       <div style="font-size:16px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">${t("pw_title")}</div>
@@ -35,7 +34,7 @@ function showPaywall(dailyTrialUsed){
 
       <div style="background:#052e16;border:2px solid #22c55e;border-radius:10px;padding:16px;margin-bottom:16px">
         <div style="font-size:11px;color:#6ee7b7;font-weight:bold;margin-bottom:10px">⭐ PAY VIA UPI (RECOMMENDED)</div>
-        <img src="${qrImgUrl}" alt="UPI QR Code" style="width:150px;height:150px;border-radius:8px;background:#fff;padding:6px;margin-bottom:10px">
+        <div id="upi-qr-canvas" style="width:150px;height:150px;margin:0 auto 10px;background:#fff;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:9px">Loading QR...</div>
         <div style="font-size:9px;color:#94a3b8;margin-bottom:6px">Scan karo, ya seedha bhejo:</div>
         <div style="font-size:14px;color:#22c55e;font-weight:bold;letter-spacing:.5px;user-select:all;background:#0b1120;border-radius:6px;padding:8px;margin-bottom:8px">${UPI_ID}</div>
         <div style="font-size:9px;color:#94a3b8;line-height:1.5">Monthly ₹299 · Yearly ₹2999 · 1-Day Trial ₹1<br>Payment ke baad email+screenshot WhatsApp par bhejo:<br>
@@ -58,6 +57,17 @@ function showPaywall(dailyTrialUsed){
       </div>
     </div>
   `);
+  // Generate the UPI QR code client-side (no external image API — nothing
+  // for a network/firewall to block, works fully offline too).
+  try{
+    const qrEl=document.getElementById("upi-qr-canvas");
+    if(qrEl && window.QRCode){
+      qrEl.innerHTML="";
+      new QRCode(qrEl, {text:upiUri, width:138, height:138, colorDark:"#000000", colorLight:"#ffffff"});
+    }else if(qrEl){
+      qrEl.textContent="QR unavailable — use UPI ID below";
+    }
+  }catch(e){}
 }
 
 function showLoading(text){
