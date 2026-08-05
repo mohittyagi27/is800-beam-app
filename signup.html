@@ -12,7 +12,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:360px;position:relative}
-.lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace}
+.lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace;max-width:110px}
 h1{font-size:16px;color:var(--accent);letter-spacing:2px;text-align:center;margin-bottom:4px}
 .sub{font-size:10px;color:var(--muted);text-align:center;margin-bottom:20px;letter-spacing:1px}
 .tabs2{display:flex;gap:0;margin-bottom:18px;border:1px solid #334155;border-radius:8px;overflow:hidden}
@@ -40,7 +40,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </head>
 <body>
 <div class="card" id="signup-card">
-  <select class="lang-switch" onchange="setLang(this.value)"><option value="en">EN</option><option value="hi">हिं</option></select>
+  <select class="lang-switch" onchange="setLang(this.value)"></select>
   <div class="tabs2"><a href="signup.html" class="active">CREATE ACCOUNT</a><a href="login.html">LOG IN</a></div>
   <h1 data-i18n="signup_title">⚙ CREATE ACCOUNT</h1>
   <div class="sub" data-i18n="signup_sub">IS 800 STEEL BEAM DESIGN TOOL</div>
@@ -55,7 +55,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <label data-i18n="confirm_password_label">Confirm Password</label>
   <input type="password" id="password2" placeholder="••••••••">
 
-  <label>Phone Number <span style="color:var(--red)">*</span></label>
+  <label><span data-i18n="phone_required_label">Phone Number</span> <span style="color:var(--red)" data-i18n="phone_required_star">*</span></label>
   <div class="phone-row">
     <input type="text" value="+91" style="width:56px;flex-shrink:0" id="phoneCode">
     <input type="tel" id="phoneNumber" placeholder="9876543210" required>
@@ -68,12 +68,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <div class="card success-box hidden" id="success-card">
   <div class="tick">✅</div>
-  <h1 style="color:var(--green)">ACCOUNT CREATED SUCCESSFULLY!</h1>
-  <div class="sub" style="margin-top:10px;font-size:11px;line-height:1.6">
-    Aapke email pe ek <b style="color:var(--accent)">verification link</b> bheja gaya hai.<br>
-    Pehle wo link kholke email verify karo, phir login karo.
+  <h1 data-i18n="success_title" style="color:var(--green)">ACCOUNT CREATED SUCCESSFULLY!</h1>
+  <div class="sub" data-i18n="success_sub" style="margin-top:10px;font-size:11px;line-height:1.6">
+    A verification link has been sent to your email. Please verify it, then log in.
   </div>
-  <button onclick="location.href='login.html'">GO TO LOGIN</button>
+  <button onclick="location.href='login.html'" data-i18n="go_login">GO TO LOGIN</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -87,15 +86,15 @@ function setMsg(text,cls){const m=document.getElementById("msg");m.textContent=t
 async function doGoogleSignup(){
   const code=document.getElementById("phoneCode").value.trim();
   const phone=document.getElementById("phoneNumber").value.trim();
-  if(!phone){setMsg("Phone number daalna zaroori hai.","err");return;}
-  setMsg("Google ke sath sign up ho raha hai...","");
+  if(!phone){setMsg(t("err_phone_required"),"err");return;}
+  setMsg(t("connecting_google"),"");
   try{
     const cred=await auth.signInWithPopup(googleProvider);
     await ensureUserDoc(cred.user, {phone:code+phone, phoneVerified:false});
     // Google accounts are already email-verified by Google — no extra step needed.
-    window.location.href="index.html";
+    window.location.href="select-code.html";
   }catch(e){
-    setMsg("Google sign-up fail hua: "+(e.message||""),"err");
+    setMsg(t("err_generic")+" "+(e.message||""),"err");
   }
 }
 
@@ -105,12 +104,12 @@ async function doSignup(){
   const pw2=document.getElementById("password2").value;
   const code=document.getElementById("phoneCode").value.trim();
   const phone=document.getElementById("phoneNumber").value.trim();
-  if(!email||!pw){setMsg("Email aur password dono bharo.","err");return;}
-  if(pw.length<6){setMsg("Password kam se kam 6 characters ka hona chahiye.","err");return;}
-  if(pw!==pw2){setMsg("Passwords match nahi kar rahe.","err");return;}
-  if(!phone){setMsg("Phone number daalna zaroori hai.","err");return;}
+  if(!email||!pw){setMsg(t("err_fill_email_pw"),"err");return;}
+  if(pw.length<6){setMsg(t("err_pw_length"),"err");return;}
+  if(pw!==pw2){setMsg(t("err_pw_mismatch"),"err");return;}
+  if(!phone){setMsg(t("err_phone_required"),"err");return;}
   const btn=document.getElementById("btnSignup");
-  btn.disabled=true;setMsg("Account ban raha hai...","");
+  btn.disabled=true;setMsg(t("creating_account"),"");
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pw);
     await ensureUserDoc(cred.user, {phone:code+phone, phoneVerified:false});
@@ -123,8 +122,8 @@ async function doSignup(){
     document.getElementById("signup-card").classList.add("hidden");
     document.getElementById("success-card").classList.remove("hidden");
   }catch(e){
-    let m=e.message||"Kuch galat ho gaya.";
-    if(e.code==="auth/email-already-in-use")m="Ye email pehle se registered hai — Login page pe jao.";
+    let m=e.message||t("err_generic");
+    if(e.code==="auth/email-already-in-use")m=t("err_email_in_use");
     setMsg(m,"err");
     btn.disabled=false;
   }
