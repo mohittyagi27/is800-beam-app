@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Module</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#64748b;--green:#22c55e;--gold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;padding:20px}
+.wrap{max-width:900px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+h1{font-size:16px;color:var(--accent);letter-spacing:1px}
+.sub{font-size:11px;color:var(--muted);margin-top:6px}
+.back{font-size:10px;color:var(--muted);text-decoration:none;border:1px solid #334155;padding:6px 12px;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:10px}
+.mod-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;cursor:pointer;transition:all .15s;position:relative}
+.mod-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.mod-card.disabled{opacity:.5;cursor:not-allowed}
+.mod-card.disabled:hover{transform:none;border-color:var(--border)}
+.badge{position:absolute;top:10px;right:10px;font-size:8px;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:.5px}
+.badge.ok{background:#052e16;color:var(--green);border:1px solid var(--green)}
+.badge.wip{background:#1c1608;color:var(--gold);border:1px solid var(--gold)}
+.icon{font-size:24px;margin-bottom:8px}
+.mod-name{font-size:12.5px;color:var(--text);font-weight:bold;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>⚙ SELECT MODULE — <span id="code-label" style="color:#f59e0b">...</span></h1>
+      <div class="sub">Kya design karna hai, choose karein</div>
+    </div>
+    <a class="back" href="select-code.html">← Change Code</a>
+  </div>
+
+  <div class="grid" id="mod-grid"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user){window.location.href="login.html";return;}
+});
+
+const params=new URLSearchParams(window.location.search);
+const codeId=params.get("code")||localStorage.getItem("selectedCode")||"IS800";
+document.getElementById("code-label").textContent=codeId;
+
+const MODULES=[
+  {id:"beam", icon:"📐", name:"Beam / Column Design", available: codeId==="IS800"},
+  {id:"baseplate", icon:"🔩", name:"Base Plate Connection", available:false},
+  {id:"endplate", icon:"🔗", name:"End Plate Moment Connection", available:false},
+  {id:"flangeplate", icon:"🔗", name:"Flange Plate Moment Connection", available:false},
+  {id:"shearconn", icon:"✂️", name:"Shear Connection", available:false},
+  {id:"splice", icon:"🔧", name:"Splice — Beam to Beam", available:false},
+  {id:"stair", icon:"🪜", name:"Stair Load Calculation", available:false}
+];
+
+function renderModules(){
+  const grid=document.getElementById("mod-grid");
+  grid.innerHTML=MODULES.map(m=>`
+    <div class="mod-card ${m.available?"":"disabled"}" onclick="${m.available?`goToModule('${m.id}')`:`showWip('${m.name}')`}">
+      <span class="badge ${m.available?"ok":"wip"}">${m.available?"✓ AVAILABLE":"🚧 WORK IN PROGRESS"}</span>
+      <div class="icon">${m.icon}</div>
+      <div class="mod-name">${m.name}</div>
+    </div>
+  `).join("");
+}
+function goToModule(modId){
+  if(modId==="beam"){ window.location.href="index.html"; return; }
+}
+function showWip(name){
+  alert(`🚧 ${name} — Work in Progress\\n\\nYe module jald hi add kiya jayega.`);
+}
+renderModules();
+</script>
+</body>
+</html>

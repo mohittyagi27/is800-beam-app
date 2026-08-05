@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Design Code</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b1120;--panel:#111827;--border:#1e3050;--accent:#38bdf8;--text:#e2e8f0;--muted:#64748b;--green:#22c55e;--gold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;padding:20px}
+.wrap{max-width:900px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+h1{font-size:16px;color:var(--accent);letter-spacing:1px}
+.sub{font-size:11px;color:var(--muted);margin-top:6px}
+select.lang-switch{background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:5px 6px;border-radius:5px;font-family:'Courier New',monospace;max-width:110px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:10px}
+.code-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;cursor:pointer;transition:all .15s;position:relative}
+.code-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.code-card.disabled{opacity:.5;cursor:not-allowed}
+.code-card.disabled:hover{transform:none;border-color:var(--border)}
+.badge{position:absolute;top:10px;right:10px;font-size:8px;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:.5px}
+.badge.ok{background:#052e16;color:var(--green);border:1px solid var(--green)}
+.badge.wip{background:#1c1608;color:var(--gold);border:1px solid var(--gold)}
+.flag{font-size:26px;margin-bottom:8px}
+.code-name{font-size:13px;color:var(--text);font-weight:bold;margin-bottom:4px}
+.code-country{font-size:10px;color:var(--muted);margin-bottom:6px}
+.code-units{font-size:9px;color:#475569}
+.logout{font-size:10px;color:var(--muted);text-decoration:none;margin-top:20px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>⚙ SELECT DESIGN CODE</h1>
+      <div class="sub">Apna design standard (country code) choose karein</div>
+    </div>
+    <select class="lang-switch" onchange="setLang(this.value)"></select>
+  </div>
+
+  <div class="grid" id="code-grid"></div>
+  <a class="logout" href="#" onclick="auth.signOut().then(()=>location.href='login.html');return false;">Logout</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="translations.js"></script>
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user){window.location.href="login.html";return;}
+  const isPasswordAccount=user.providerData.some(p=>p.providerId==="password");
+  if(isPasswordAccount && !user.emailVerified){window.location.href="login.html";return;}
+});
+
+const CODES = [
+  {id:"IS800", flag:"🇮🇳", name:"IS 800:2007", country:"India", units:"mm, kN, MPa", available:true},
+  {id:"AISC360", flag:"🇺🇸", name:"AISC 360", country:"USA", units:"in, kip, ksi", available:false},
+  {id:"GB50017", flag:"🇨🇳", name:"GB 50017", country:"China", units:"mm, kN, MPa", available:false},
+  {id:"EC3", flag:"🇪🇺", name:"Eurocode 3 (EN 1993)", country:"Europe", units:"mm, kN, MPa", available:false},
+  {id:"BS5950", flag:"🇬🇧", name:"BS 5950", country:"United Kingdom", units:"mm, kN, MPa", available:false},
+  {id:"AS4100", flag:"🇦🇺", name:"AS 4100", country:"Australia", units:"mm, kN, MPa", available:false},
+  {id:"CSA_S16", flag:"🇨🇦", name:"CSA S16", country:"Canada", units:"mm, kN, MPa", available:false},
+  {id:"JIS", flag:"🇯🇵", name:"JIS / AIJ", country:"Japan", units:"mm, kN, MPa", available:false},
+  {id:"SNI", flag:"🇮🇩", name:"SNI 1729", country:"Indonesia", units:"mm, kN, MPa", available:false},
+  {id:"SANS", flag:"🇿🇦", name:"SANS 10162", country:"South Africa", units:"mm, kN, MPa", available:false}
+];
+
+function renderCodes(){
+  const grid=document.getElementById("code-grid");
+  grid.innerHTML=CODES.map(c=>`
+    <div class="code-card ${c.available?"":"disabled"}" onclick="${c.available?`selectCode('${c.id}')`:`showWip('${c.name}')`}">
+      <span class="badge ${c.available?"ok":"wip"}">${c.available?"✓ AVAILABLE":"🚧 WORK IN PROGRESS"}</span>
+      <div class="flag">${c.flag}</div>
+      <div class="code-name">${c.name}</div>
+      <div class="code-country">${c.country}</div>
+      <div class="code-units">Units: ${c.units}</div>
+    </div>
+  `).join("");
+}
+function selectCode(codeId){
+  localStorage.setItem("selectedCode",codeId);
+  window.location.href="select-module.html?code="+codeId;
+}
+function showWip(name){
+  alert(`🚧 ${name} — Work in Progress\\n\\nYe design code jald hi add kiya jayega. Abhi ke liye IS 800 (India) use karein.`);
+}
+renderCodes();
+</script>
+</body>
+</html>
