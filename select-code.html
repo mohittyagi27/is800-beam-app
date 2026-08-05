@@ -73,7 +73,7 @@ const CODES = [
 function renderCodes(){
   const grid=document.getElementById("code-grid");
   grid.innerHTML=CODES.map(c=>`
-    <div class="code-card ${c.available?"":"disabled"}" onclick="${c.available?`selectCode('${c.id}')`:`showWip('${c.name}')`}">
+    <div class="code-card" onclick="selectCode('${c.id}')">
       <span class="badge ${c.available?"ok":"wip"}">${c.available?"✓ AVAILABLE":"🚧 WORK IN PROGRESS"}</span>
       <div class="flag">${c.flag}</div>
       <div class="code-name">${c.name}</div>
@@ -85,9 +85,6 @@ function renderCodes(){
 function selectCode(codeId){
   localStorage.setItem("selectedCode",codeId);
   window.location.href="select-module.html?code="+codeId;
-}
-function showWip(name){
-  alert(`🚧 ${name} — Work in Progress\\n\\nYe design code jald hi add kiya jayega. Abhi ke liye IS 800 (India) use karein.`);
 }
 renderCodes();
 </script>
