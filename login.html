@@ -12,7 +12,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:360px;position:relative}
-.lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace}
+.lang-switch{position:absolute;top:14px;right:14px;background:#0b1120;border:1px solid #334155;color:var(--text);font-size:10px;padding:4px 6px;border-radius:5px;font-family:'Courier New',monospace;max-width:110px}
 h1{font-size:16px;color:var(--accent);letter-spacing:2px;text-align:center;margin-bottom:4px}
 .sub{font-size:10px;color:var(--muted);text-align:center;margin-bottom:20px;letter-spacing:1px}
 .tabs2{display:flex;gap:0;margin-bottom:18px;border:1px solid #334155;border-radius:8px;overflow:hidden}
@@ -38,7 +38,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </head>
 <body>
 <div class="card">
-  <select class="lang-switch" onchange="setLang(this.value)"><option value="en">EN</option><option value="hi">हिं</option></select>
+  <select class="lang-switch" onchange="setLang(this.value)"></select>
   <div class="tabs2"><a href="signup.html">CREATE ACCOUNT</a><a href="login.html" class="active">LOG IN</a></div>
   <h1 data-i18n="login_title">⚙ LOG IN</h1>
   <div class="sub" data-i18n="login_sub">IS 800 STEEL BEAM DESIGN TOOL</div>
@@ -55,9 +55,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <button class="btn-google" onclick="doGoogleLogin()"><span>🔵</span> <span data-i18n="google_btn">Continue with Google</span></button>
 
   <div id="verify-box" class="verify-box hidden">
-    ⚠️ Aapka email abhi verify nahi hua hai.<br>
-    Signup ke waqt bheja gaya verification link check karo (inbox/spam).<br>
-    <button onclick="resendVerification()" style="margin-top:10px">Resend Verification Email</button>
+    <span data-i18n="verify_box_msg">⚠️ Aapka email abhi verify nahi hua hai.</span><br>
+    <span data-i18n="verify_box_msg2">Signup ke waqt bheja gaya verification link check karo (inbox/spam).</span><br>
+    <button onclick="resendVerification()" style="margin-top:10px" data-i18n="resend_btn">Resend Verification Email</button>
   </div>
 
   <div class="msg" id="msg"></div>
@@ -79,9 +79,9 @@ let pendingUnverifiedUser=null;
 async function doLogin(){
   const email=document.getElementById("email").value.trim();
   const pw=document.getElementById("password").value;
-  if(!email||!pw){setMsg("Email aur password bharo.","err");return;}
+  if(!email||!pw){setMsg(t("err_fill_both"),"err");return;}
   const btn=document.getElementById("btnLogin");
-  btn.disabled=true;setMsg("Login ho raha hai...","");
+  btn.disabled=true;setMsg(t("logging_in"),"");
   document.getElementById("verify-box").classList.add("hidden");
   try{
     const cred=await auth.signInWithEmailAndPassword(email,pw);
@@ -89,44 +89,44 @@ async function doLogin(){
     if(isPasswordAccount && !cred.user.emailVerified){
       pendingUnverifiedUser=cred.user;
       document.getElementById("verify-box").classList.remove("hidden");
-      setMsg("Pehle apna email verify karo, phir login karo.","err");
+      setMsg(t("err_verify_first"),"err");
       await auth.signOut();
       btn.disabled=false;
       return;
     }
     await ensureUserDoc(cred.user);
-    window.location.href="index.html";
+    window.location.href="select-code.html";
   }catch(e){
-    setMsg("Email ya password galat hai.","err");
+    setMsg(t("err_login_failed"),"err");
     btn.disabled=false;
   }
 }
 async function resendVerification(){
-  if(!pendingUnverifiedUser){setMsg("Pehle login try karo, phir resend dabao.","err");return;}
+  if(!pendingUnverifiedUser){setMsg(t("err_login_failed"),"err");return;}
   try{
     await pendingUnverifiedUser.sendEmailVerification();
-    setMsg("Verification email dobara bhej di gayi hai.","ok");
+    setMsg(t("resent_ok"),"ok");
   }catch(e){
-    setMsg("Bhejne mein error — thodi der baad try karo.","err");
+    setMsg(t("err_reset_failed"),"err");
   }
 }
 async function doReset(){
   const email=document.getElementById("email").value.trim();
-  if(!email){setMsg("Pehle apna email box mein daalo, phir 'Forgot password' dabao.","err");return;}
+  if(!email){setMsg(t("err_reset_email_first"),"err");return;}
   try{
     await auth.sendPasswordResetEmail(email);
-    setMsg("Password reset link email pe bhej di gayi hai.","ok");
+    setMsg(t("reset_sent"),"ok");
   }catch(e){
-    setMsg("Reset email nahi bhej paya — email check karo.","err");
+    setMsg(t("err_reset_failed"),"err");
   }
 }
 
 async function doGoogleLogin(){
-  setMsg("Google ke sath sign in ho raha hai...","");
+  setMsg("Google...","");
   try{
     const cred=await auth.signInWithPopup(googleProvider);
     await ensureUserDoc(cred.user);
-    window.location.href="index.html";
+    window.location.href="select-code.html";
   }catch(e){
     setMsg("Google sign-in fail hua: "+(e.message||""),"err");
   }
