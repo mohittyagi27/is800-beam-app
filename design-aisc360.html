@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AISC 360 Steel Beam Design Tool</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root {
+  --bg:#0b1120; --panel:#111827; --panel2:#1a2235; --border:#1e3050;
+  --accent:#38bdf8; --gold:#f59e0b; --green:#22c55e; --red:#ef4444;
+  --purple:#a78bfa; --orange:#fb923c;
+  --text:#e2e8f0; --muted:#64748b; --dim:#334155;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;padding:12px}
+h1{text-align:center;font-size:20px;letter-spacing:4px;color:var(--accent);padding:10px 0 4px;border-bottom:1px solid var(--border)}
+.subtitle{text-align:center;font-size:10px;color:var(--muted);margin:4px 0 8px;letter-spacing:2px}
+.beta-banner{max-width:900px;margin:0 auto 14px;background:#1c1608;border:1px solid var(--gold);border-radius:8px;padding:10px 16px;font-size:10.5px;color:#fcd34d;text-align:center;line-height:1.6}
+.back-link{display:inline-block;margin:8px auto 0;text-align:center;width:100%;font-size:10px}
+.back-link a{color:var(--accent);text-decoration:none}
+
+.top-layout{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;max-width:1400px;margin-left:auto;margin-right:auto}
+.col-left{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
+.col-mid{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
+.col-right{flex:1;min-width:320px;display:flex;flex-direction:column;gap:8px}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px}
+.stitle{font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:bold;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border)}
+
+label{font-size:10px;color:#94a3b8;display:block;margin-bottom:3px}
+select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:1px solid var(--dim);color:var(--text);padding:5px 8px;border-radius:4px;font-family:'Courier New',monospace;font-size:11px;outline:none}
+.form-row{margin-bottom:8px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{flex:1;min-width:72px;background:var(--panel);border-radius:6px;padding:6px 8px;text-align:center;border:1px solid var(--dim)}
+.chip .cl{font-size:8px;color:var(--muted);margin-bottom:2px}
+.chip .cv{font-size:13px;font-weight:bold}
+
+.check-table{width:100%;border-collapse:collapse;font-size:10px}
+.check-table th{color:var(--muted);padding:4px 6px;text-align:left;border-bottom:1px solid var(--border);font-weight:normal;font-size:9px}
+.check-table td{padding:4px 6px;border-bottom:1px solid #111827}
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.warn{color:var(--gold);font-weight:bold}
+
+.status-banner{padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px}
+.btn-calc{width:100%;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<h1>⚙ AISC 360 STEEL BEAM DESIGN</h1>
+<div class="subtitle">AISC 360-22 · LRFD · W-SHAPES · IMPERIAL UNITS</div>
+<div class="beta-banner">
+  ⚠️ <b>BETA — Phase 1</b>: Covers flexural (yielding + LTB per Ch. F2), shear (Ch. G2), and deflection checks only.
+  Compression, tension, and combined-force checks are not yet included — coming in a future update.
+  <b>Always independently verify against AISC 360 and the current Steel Construction Manual before use in any real project.</b>
+</div>
+<div class="back-link"><a href="select-module.html?code=AISC360">← Back to Module Selection</a></div>
+
+<div class="top-layout">
+<div class="col-left">
+  <div class="card">
+    <div class="stitle">SECTION</div>
+    <div class="form-row">
+      <label>W-Shape Designation</label>
+      <select id="secDesig" onchange="onSectionChange()"></select>
+    </div>
+    <div class="form-row">
+      <label>Steel Grade</label>
+      <select id="steelGrade" onchange="onSectionChange()">
+        <option value="50">A992 — Fy=50 ksi (most common)</option>
+        <option value="36">A36 — Fy=36 ksi</option>
+      </select>
+    </div>
+    <div id="sec-props-list" style="font-size:10px;color:#94a3b8;line-height:1.8;margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <div class="stitle">MEMBER</div>
+    <div class="form-row">
+      <label>Support Condition</label>
+      <select id="supCond" onchange="updateAll()">
+        <option value="SS">Simply Supported</option>
+        <option value="CANT">Cantilever</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Span L (ft)</label>
+      <input type="number" id="inp-L" value="20" step="0.5" oninput="updateAll()">
+    </div>
+    <div class="form-row">
+      <label>Unbraced Length Lb (ft) — for LTB</label>
+      <input type="number" id="inp-Lb" value="20" step="0.5" oninput="updateAll()">
+    </div>
+    <div class="form-row">
+      <label>Cb (LTB modification factor)</label>
+      <input type="number" id="inp-Cb" value="1.0" step="0.05" oninput="updateAll()">
+    </div>
+    <div class="form-row">
+      <label>Deflection Limit</label>
+      <select id="deflLimit" onchange="updateAll()">
+        <option value="360">L/360 — Floor beam (LL)</option>
+        <option value="240">L/240 — Roof beam</option>
+        <option value="180">L/180 — Cantilever</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="col-mid">
+  <div class="card">
+    <div class="stitle">LOADS (SERVICE, unfactored)</div>
+    <div class="form-row"><label>Dead Load wD (kip/ft)</label><input type="number" id="inp-wD" value="0.5" step="0.05" oninput="updateAll()"></div>
+    <div class="form-row"><label>Live Load wL (kip/ft)</label><input type="number" id="inp-wL" value="1.0" step="0.05" oninput="updateAll()"></div>
+    <div style="font-size:9px;color:var(--muted);margin-top:6px">LRFD combo used: 1.2D + 1.6L (ASCE 7 basic combo)</div>
+    <button class="btn-calc" onclick="updateAll()" style="margin-top:10px">▶ CALCULATE</button>
+  </div>
+</div>
+
+<div class="col-right">
+  <div class="chips">
+    <div class="chip"><div class="cl">Mu (kip-ft)</div><div class="cv" style="color:var(--purple)" id="cr-Mu">—</div></div>
+    <div class="chip"><div class="cl">Vu (kip)</div><div class="cv" style="color:#34d399" id="cr-Vu">—</div></div>
+    <div class="chip"><div class="cl">Deflection (in)</div><div class="cv" style="color:var(--orange)" id="cr-def">—</div></div>
+  </div>
+  <div id="status-banner" class="status-banner" style="background:#111827;border:1px solid var(--border)">⏳ SELECT SECTION</div>
+  <div class="card">
+    <div class="stitle">AISC 360 DESIGN CHECKS</div>
+    <table class="check-table">
+      <thead><tr><th>CHECK</th><th>CLAUSE</th><th>DEMAND</th><th>CAPACITY</th><th>UR</th><th>STATUS</th></tr></thead>
+      <tbody id="check-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user){window.location.href="login.html";}
+});
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// AISC W-SHAPE DATABASE — Source: AISC Steel Construction Manual,
+// 16th Edition, Table 1-1 (ASTM A992, Fy=50ksi baseline geometry).
+// Units: d,bf,tf,tw in inches; A in in²; Ix,Iy in in⁴; Sx,Zx,Sy,Zy in in³; rx,ry in in.
+// [name, d, bf, tf, tw, A, Ix, Sx, Zx, rx, Iy, Sy, Zy, ry, wt(lb/ft)]
+// ═══════════════════════════════════════════════════════════════
+const WSHAPES = [
+["W8x31",7.99,7.992,0.433,0.285,9.13,110,27.5,30.4,3.47,37.1,9.28,14.1,2.02,31.0],
+["W8x40",8.27,8.071,0.559,0.360,11.70,146,35.5,39.8,3.53,49.1,12.2,18.6,2.05,40.0],
+["W10x33",9.72,7.953,0.433,0.290,9.70,171,35.0,38.8,4.17,36.6,9.2,14.0,1.94,33.0],
+["W10x45",10.12,8.031,0.618,0.350,13.30,247,49.1,54.9,4.33,53.4,13.3,20.3,2.00,45.0],
+["W10x60",10.20,10.118,0.681,0.421,17.67,341,66.7,74.6,4.41,116,22.9,35.0,2.57,60.0],
+["W12x26",12.20,6.496,0.380,0.230,7.66,204,33.4,37.2,5.16,17.3,5.34,8.17,1.51,26.0],
+["W12x40",11.93,7.992,0.516,0.295,11.80,307,51.5,57.5,5.12,44.1,11.0,16.8,1.93,40.0],
+["W12x53",12.09,10.000,0.575,0.345,15.66,425,70.6,77.9,5.24,95.8,19.2,29.1,2.48,53.0],
+["W12x65",12.09,12.008,0.606,0.390,19.07,533,87.9,96.8,5.28,174,29.1,44.1,3.02,65.0],
+["W14x22",13.70,5.000,0.335,0.230,6.49,199,29.0,33.2,5.55,7.00,2.80,4.39,1.04,22.0],
+["W14x30",13.82,6.732,0.385,0.270,8.85,291,42.0,47.3,5.75,19.6,5.82,8.99,1.49,30.0],
+["W14x43",13.70,7.992,0.531,0.305,12.60,428,62.7,69.6,5.83,45.2,11.3,17.3,1.89,43.0],
+["W14x61",13.90,10.000,0.646,0.375,17.83,640,92.2,102.0,5.98,107,21.5,32.8,2.45,61.0],
+["W14x82",14.31,10.130,0.855,0.510,24.00,881,123.0,139.0,6.05,148,29.3,44.8,2.48,82.0],
+["W16x26",15.69,5.500,0.345,0.250,7.68,301,38.4,44.2,6.26,9.59,3.49,5.48,1.12,26.0],
+["W16x40",16.01,7.000,0.505,0.305,11.80,518,64.7,73.0,6.63,28.9,8.25,12.7,1.57,40.0],
+["W16x50",16.26,7.070,0.630,0.380,14.70,659,81.0,92.0,6.68,37.2,10.5,16.3,1.59,50.0],
+["W18x35",17.70,6.000,0.425,0.300,10.30,510,57.6,66.5,7.04,15.3,5.12,7.97,1.22,35.0],
+["W18x50",17.99,7.495,0.570,0.355,14.70,800,88.9,101.0,7.38,40.1,10.7,16.6,1.65,50.0],
+["W18x76",18.21,11.035,0.680,0.425,22.30,1330,146.0,163.0,7.73,152,27.6,42.2,2.61,76.0],
+["W21x44",20.66,6.500,0.450,0.350,13.00,843,81.6,95.4,8.06,20.7,6.37,9.94,1.26,44.0],
+["W21x62",20.99,8.240,0.615,0.400,18.30,1330,127.0,144.0,8.54,57.5,13.9,21.7,1.77,62.0],
+["W24x55",23.57,7.005,0.505,0.395,16.20,1350,114.0,134.0,9.11,29.1,8.30,12.9,1.34,55.0],
+["W24x68",23.73,8.965,0.585,0.415,20.10,1830,154.0,177.0,9.55,70.4,15.7,24.5,1.87,68.0],
+["W24x94",24.31,9.065,0.875,0.515,27.70,2700,222.0,254.0,9.87,109.0,24.0,37.5,1.98,94.0],
+["W27x84",26.71,9.960,0.640,0.460,24.80,2850,213.0,244.0,10.70,106.0,21.2,32.6,2.07,84.0],
+["W30x99",29.65,10.450,0.670,0.520,29.10,3990,269.0,312.0,11.71,128.0,24.5,37.3,2.10,99.0],
+["W33x118",32.86,11.480,0.740,0.550,34.70,5900,359.0,415.0,13.02,187.0,32.6,49.2,2.32,118.0],
+["W36x135",35.55,11.950,0.790,0.600,39.70,7800,439.0,509.0,14.02,225.0,37.7,57.0,2.38,135.0]
+];
+
+function populateDesig(){
+  const sel=document.getElementById("secDesig");
+  sel.innerHTML=WSHAPES.map(s=>`<option value="${s[0]}">${s[0]}</option>`).join("");
+  sel.selectedIndex=Math.floor(WSHAPES.length/2);
+}
+function getSection(){
+  const name=document.getElementById("secDesig").value;
+  const r=WSHAPES.find(x=>x[0]===name);
+  if(!r)return null;
+  return {name:r[0],d:r[1],bf:r[2],tf:r[3],tw:r[4],A:r[5],Ix:r[6],Sx:r[7],Zx:r[8],rx:r[9],Iy:r[10],Sy:r[11],Zy:r[12],ry:r[13],wt:r[14]};
+}
+
+let currentSec=null;
+function onSectionChange(){
+  currentSec=getSection();
+  updateSecProps();
+  updateAll();
+}
+function updateSecProps(){
+  const s=currentSec;
+  if(!s)return;
+  document.getElementById("sec-props-list").innerHTML=[
+    ["d",`${s.d} in`],["bf",`${s.bf} in`],["tf",`${s.tf} in`],["tw",`${s.tw} in`],
+    ["A",`${s.A} in²`],["Ix",`${s.Ix} in⁴`],["Zx",`${s.Zx} in³`],["ry",`${s.ry} in`],
+    ["Weight",`${s.wt} lb/ft`]
+  ].map(([k,v])=>`<div>${k}: <b style="color:var(--text)">${v}</b></div>`).join("");
+}
+
+function runChecks(){
+  const s=currentSec;
+  if(!s)return;
+  const Fy=+document.getElementById("steelGrade").value;
+  const E=29000; // ksi
+  const L=+document.getElementById("inp-L").value||20;
+  const Lb=(+document.getElementById("inp-Lb").value||L)*12; // in
+  const Cb=+document.getElementById("inp-Cb").value||1.0;
+  const sc=document.getElementById("supCond").value;
+  const wD=+document.getElementById("inp-wD").value||0;
+  const wL=+document.getElementById("inp-wL").value||0;
+  const wu=1.2*wD+1.6*wL; // kip/ft, LRFD basic combo
+  const ws=wD+wL; // service, for deflection
+
+  let Mu,Vu;
+  if(sc==="SS"){ Mu=wu*L*L/8; Vu=wu*L/2; }
+  else { Mu=wu*L*L/2; Vu=wu*L; }
+
+  const Zx=s.Zx, Sx=s.Sx, Iy=s.Iy, ry=s.ry;
+  const Mp=Fy*Zx/12;
+  const eps=Math.sqrt(E/Fy);
+  const lambda_f=(s.bf/2)/s.tf;
+  const compactFlange = lambda_f<=0.38*eps;
+  const h_tw=(s.d-2*s.tf)/s.tw;
+  const compactWeb = h_tw<=3.76*eps;
+  const compact = compactFlange && compactWeb;
+
+  const ho=s.d-s.tf;
+  const rts=Math.sqrt(Math.sqrt(Iy*ho)/(2*Sx))||ry;
+  const Lp=1.76*ry*Math.sqrt(E/Fy);
+  const term=(0.7*Fy)/E*(s.bf*s.tf*ho)/(2*Sx);
+  const Lr=1.95*rts*(E/(0.7*Fy))*Math.sqrt(term+Math.sqrt(term*term+6.76*Math.pow((0.7*Fy)/E,2)));
+
+  let Mn_ltb;
+  if(Lb<=Lp){ Mn_ltb=Mp; }
+  else if(Lb<=Lr){
+    Mn_ltb=Math.min(Cb*(Mp-(Mp-0.7*Fy*Sx/12)*((Lb-Lp)/(Lr-Lp))),Mp);
+  }else{
+    const Fcr=(Cb*Math.PI*Math.PI*E)/Math.pow(Lb/rts,2)*Math.sqrt(1+0.078*(s.bf*s.tf*ho)/(2*Sx)*Math.pow(Lb/rts,2));
+    Mn_ltb=Math.min(Fcr*Sx/12,Mp);
+  }
+  const Mn=compact?Mn_ltb:Mn_ltb*0.9;
+  const phi_b=0.90;
+  const phiMn=phi_b*Mn;
+  const UR_flex=Mu/Math.max(phiMn,0.001);
+
+  const Aw=s.d*s.tw;
+  const kv=5.34;
+  const h_tw_lim1=2.24*Math.sqrt(E/Fy);
+  let Cv1;
+  if(h_tw<=h_tw_lim1){ Cv1=1.0; }
+  else {
+    const h_tw_lim2=1.10*Math.sqrt(kv*E/Fy);
+    Cv1 = h_tw<=h_tw_lim2 ? 1.0 : (1.10*Math.sqrt(kv*E/Fy))/h_tw;
+  }
+  const phi_v=h_tw<=h_tw_lim1?1.00:0.90;
+  const Vn=0.6*Fy*Aw*Cv1;
+  const phiVn=phi_v*Vn;
+  const UR_shear=Vu/Math.max(phiVn,0.001);
+
+  const EI=E*s.Ix;
+  const Lin=L*12;
+  let delta;
+  if(sc==="SS") delta=5*(ws/12)*Math.pow(Lin,4)/(384*EI);
+  else delta=(ws/12)*Math.pow(Lin,4)/(8*EI);
+  const deflRatio=+document.getElementById("deflLimit").value;
+  const deflAllow=Lin/deflRatio;
+  const UR_defl=delta/deflAllow;
+
+  document.getElementById("cr-Mu").textContent=Mu.toFixed(1);
+  document.getElementById("cr-Vu").textContent=Vu.toFixed(1);
+  document.getElementById("cr-def").textContent=delta.toFixed(3);
+
+  const checks=[
+    {name:"Flexural Yielding + LTB",clause:"AISC 360 Ch. F2",demand:`${Mu.toFixed(1)} kip-ft`,capacity:`${phiMn.toFixed(1)} kip-ft`,ur:UR_flex},
+    {name:"Shear",clause:"AISC 360 Ch. G2.1",demand:`${Vu.toFixed(1)} kip`,capacity:`${phiVn.toFixed(1)} kip`,ur:UR_shear},
+    {name:"Deflection",clause:"Serviceability",demand:`${delta.toFixed(3)} in`,capacity:`${deflAllow.toFixed(3)} in (L/${deflRatio})`,ur:UR_defl}
+  ];
+
+  const tbody=document.getElementById("check-tbody");
+  tbody.innerHTML=checks.map(c=>{
+    const status=c.ur<=0.75?"✅ PASS":c.ur<=1.0?"⚠ PASS":"❌ FAIL";
+    const cls=c.ur<=1.0?"pass":"fail";
+    const color=c.ur<=0.75?"#22c55e":c.ur<=1.0?"#f59e0b":"#ef4444";
+    return `<tr><td>${c.name}</td><td style="color:var(--muted)">${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td>
+    <td style="color:${color};font-weight:bold">${c.ur.toFixed(3)}</td><td class="${cls}">${status}</td></tr>`;
+  }).join("");
+
+  const govUR=Math.max(...checks.map(c=>c.ur));
+  const banner=document.getElementById("status-banner");
+  if(govUR<=1.0){banner.textContent=`✅ SECTION ADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#052e16;border-color:#22c55e;color:#22c55e;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;border:1px solid";}
+  else{banner.textContent=`❌ SECTION INADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#1c0a0a;border-color:#ef4444;color:#ef4444;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;border:1px solid";}
+}
+
+function updateAll(){
+  if(currentSec)runChecks();
+}
+
+populateDesig();
+onSectionChange();
+</script>
+</body>
+</html>

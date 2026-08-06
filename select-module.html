@@ -55,7 +55,7 @@ const codeId=params.get("code")||localStorage.getItem("selectedCode")||"IS800";
 document.getElementById("code-label").textContent=codeId;
 
 const MODULES=[
-  {id:"beam", icon:"📐", name:"Beam / Column Design", available: codeId==="IS800"},
+  {id:"beam", icon:"📐", name:"Beam / Column Design", available: (codeId==="IS800"||codeId==="AISC360")},
   {id:"baseplate", icon:"🔩", name:"Base Plate Connection", available:false},
   {id:"endplate", icon:"🔗", name:"End Plate Moment Connection", available:false},
   {id:"flangeplate", icon:"🔗", name:"Flange Plate Moment Connection", available:false},
@@ -75,7 +75,9 @@ function renderModules(){
   `).join("");
 }
 function goToModule(modId){
-  if(modId==="beam"){ window.location.href="index.html"; return; }
+  if(modId!=="beam")return;
+  if(codeId==="IS800"){ window.location.href="index.html"; }
+  else if(codeId==="AISC360"){ window.location.href="design-aisc360.html"; }
 }
 function showWip(name){
   alert(`🚧 ${name} — Work in Progress\\n\\nYe module jald hi add kiya jayega.`);
