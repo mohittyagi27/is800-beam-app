@@ -11,7 +11,7 @@
 :root {
   --bg:#0b1120; --panel:#111827; --panel2:#1a2235; --border:#1e3050;
   --accent:#38bdf8; --gold:#f59e0b; --green:#22c55e; --red:#ef4444;
-  --purple:#a78bfa; --orange:#fb923c;
+  --purple:#a78bfa; --orange:#fb923c; --pink:#f472b6;
   --text:#e2e8f0; --muted:#64748b; --dim:#334155;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -22,7 +22,7 @@ h1{text-align:center;font-size:20px;letter-spacing:4px;color:var(--accent);paddi
 .back-link{display:inline-block;margin:8px auto 0;text-align:center;width:100%;font-size:10px}
 .back-link a{color:var(--accent);text-decoration:none}
 
-.top-layout{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;max-width:1400px;margin-left:auto;margin-right:auto}
+.top-layout{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;max-width:1500px;margin-left:auto;margin-right:auto}
 .col-left{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
 .col-mid{flex:0 0 280px;display:flex;flex-direction:column;gap:8px}
 .col-right{flex:1;min-width:320px;display:flex;flex-direction:column;gap:8px}
@@ -35,6 +35,15 @@ label{font-size:10px;color:#94a3b8;display:block;margin-bottom:3px}
 select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:1px solid var(--dim);color:var(--text);padding:5px 8px;border-radius:4px;font-family:'Courier New',monospace;font-size:11px;outline:none}
 .form-row{margin-bottom:8px}
 .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.tab{padding:5px 10px;border:1px solid var(--dim);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-family:'Courier New',monospace}
+.tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:bold}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.load-block{background:var(--bg);border-radius:6px;padding:8px;margin-bottom:8px;border:1px solid #1e3050}
+.load-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.btn-x{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:13px}
+.btn-add{width:100%;padding:6px;background:transparent;border:1px dashed #334155;border-radius:4px;color:#475569;cursor:pointer;font-size:10px;font-family:'Courier New',monospace}
 
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{flex:1;min-width:72px;background:var(--panel);border-radius:6px;padding:6px 8px;text-align:center;border:1px solid var(--dim)}
@@ -46,22 +55,35 @@ select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:
 .check-table td{padding:4px 6px;border-bottom:1px solid #111827}
 .pass{color:var(--green);font-weight:bold}
 .fail{color:var(--red);font-weight:bold}
-.warn{color:var(--gold);font-weight:bold}
+.na{color:var(--muted)}
+.urbar-wrap{margin:3px 0}
+.urbar{height:6px;background:#1e293b;border-radius:3px;overflow:hidden}
+.urbar-fill{height:100%;border-radius:3px}
 
+svg{display:block;width:100%;overflow:visible}
+.diag-lbl{font-size:9px;color:var(--muted);text-align:center;margin-bottom:3px}
 .status-banner{padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px}
 .btn-calc{width:100%;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px}
+.check-scroll{max-height:420px;overflow-y:auto}
+@media print{ body *{visibility:hidden} #print-report,#print-report *{visibility:visible} #print-report{display:block !important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111;font-family:Arial;padding:20px} }
 </style>
 </head>
 <body>
 
 <h1>⚙ AISC 360 STEEL BEAM DESIGN</h1>
-<div class="subtitle">AISC 360-22 · LRFD · W-SHAPES · IMPERIAL UNITS</div>
+<div class="subtitle">AISC 360-22 · LRFD · W-SHAPES · IMPERIAL (FRACTIONAL INCH) UNITS</div>
 <div class="beta-banner">
-  ⚠️ <b>BETA — Phase 1</b>: Covers flexural (yielding + LTB per Ch. F2), shear (Ch. G2), and deflection checks only.
-  Compression, tension, and combined-force checks are not yet included — coming in a future update.
-  <b>Always independently verify against AISC 360 and the current Steel Construction Manual before use in any real project.</b>
+  ⚠️ <b>BETA</b>: Covers flexural (Ch. F2), shear (Ch. G2), deflection, compression (Ch. E3), tension yielding (Ch. D2),
+  and combined axial+flexure (Ch. H1) checks for doubly-symmetric W-shapes. Connections, torsion, and non-compact/slender
+  section reductions are simplified/approximate. <b>Always independently verify against AISC 360 and the current Steel
+  Construction Manual before use in any real project.</b>
 </div>
 <div class="back-link"><a href="select-module.html?code=AISC360">← Back to Module Selection</a></div>
+
+<div style="display:flex;justify-content:center;margin-bottom:10px">
+  <button onclick="generatePDFReport()" style="background:#0b1120;border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:6px;font-family:'Courier New',monospace;font-size:10px;cursor:pointer">🖨 PDF REPORT</button>
+</div>
+<div id="print-report" style="display:none"></div>
 
 <div class="top-layout">
 <div class="col-left">
@@ -87,15 +109,26 @@ select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:
       <select id="supCond" onchange="updateAll()">
         <option value="SS">Simply Supported</option>
         <option value="CANT">Cantilever</option>
+        <option value="FIXED">Fixed-Fixed</option>
+        <option value="PROPPED">Propped Cantilever</option>
+        <option value="OVERHANG">Overhanging Beam</option>
       </select>
+    </div>
+    <div id="overhang-row" style="display:none" class="form-row">
+      <label>Overhang Length c (ft)</label>
+      <input type="number" id="inp-c" value="5" step="0.5" oninput="updateAll()">
     </div>
     <div class="form-row">
       <label>Span L (ft)</label>
       <input type="number" id="inp-L" value="20" step="0.5" oninput="updateAll()">
     </div>
     <div class="form-row">
-      <label>Unbraced Length Lb (ft) — for LTB</label>
+      <label>Unbraced Length Lb (ft) — LTB</label>
       <input type="number" id="inp-Lb" value="20" step="0.5" oninput="updateAll()">
+    </div>
+    <div class="form-row">
+      <label>Effective Length Factor K (axial)</label>
+      <input type="number" id="inp-K" value="1.0" step="0.05" oninput="updateAll()">
     </div>
     <div class="form-row">
       <label>Cb (LTB modification factor)</label>
@@ -114,27 +147,62 @@ select,input[type=number],input[type=text]{width:100%;background:#0b1120;border:
 
 <div class="col-mid">
   <div class="card">
-    <div class="stitle">LOADS (SERVICE, unfactored)</div>
-    <div class="form-row"><label>Dead Load wD (kip/ft)</label><input type="number" id="inp-wD" value="0.5" step="0.05" oninput="updateAll()"></div>
-    <div class="form-row"><label>Live Load wL (kip/ft)</label><input type="number" id="inp-wL" value="1.0" step="0.05" oninput="updateAll()"></div>
-    <div style="font-size:9px;color:var(--muted);margin-top:6px">LRFD combo used: 1.2D + 1.6L (ASCE 7 basic combo)</div>
+    <div class="stitle">LOADS</div>
+    <div class="tabs" id="load-tabs">
+      <div class="tab active" onclick="showTab('gravity')">GRAVITY</div>
+      <div class="tab" onclick="showTab('axial')">AXIAL</div>
+    </div>
+    <div class="tab-panel active" id="lt-gravity">
+      <div class="form-row"><label>Dead Load wD (kip/ft)</label><input type="number" id="inp-wD" value="0.5" step="0.05" oninput="updateAll()"></div>
+      <div class="form-row"><label>Live Load wL (kip/ft)</label><input type="number" id="inp-wL" value="1.0" step="0.05" oninput="updateAll()"></div>
+      <div class="stitle" style="margin-top:10px">POINT LOADS</div>
+      <div id="pl-list"></div>
+      <button class="btn-add" onclick="addPL()" id="btn-add-pl">+ Add Point Load</button>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px">LRFD: 1.2D+1.6L</div>
+    </div>
+    <div class="tab-panel" id="lt-axial">
+      <div class="form-row"><label>Axial Compressive Load Pu (kip)</label><input type="number" id="inp-Pu-c" value="0" step="5" oninput="updateAll()"></div>
+      <div class="form-row"><label>Axial Tensile Load Pu (kip)</label><input type="number" id="inp-Pu-t" value="0" step="5" oninput="updateAll()"></div>
+    </div>
     <button class="btn-calc" onclick="updateAll()" style="margin-top:10px">▶ CALCULATE</button>
   </div>
 </div>
 
 <div class="col-right">
   <div class="chips">
+    <div class="chip"><div class="cl">RA (kip)</div><div class="cv" style="color:var(--green)" id="cr-RA">—</div></div>
+    <div class="chip"><div class="cl">RB (kip)</div><div class="cv" style="color:var(--green)" id="cr-RB">—</div></div>
     <div class="chip"><div class="cl">Mu (kip-ft)</div><div class="cv" style="color:var(--purple)" id="cr-Mu">—</div></div>
     <div class="chip"><div class="cl">Vu (kip)</div><div class="cv" style="color:#34d399" id="cr-Vu">—</div></div>
-    <div class="chip"><div class="cl">Deflection (in)</div><div class="cv" style="color:var(--orange)" id="cr-def">—</div></div>
+    <div class="chip"><div class="cl">Deflection</div><div class="cv" style="color:var(--orange)" id="cr-def">—</div></div>
   </div>
+
+  <div class="card" style="padding:10px">
+    <div class="diag-lbl">BEAM DIAGRAM</div>
+    <svg id="svg-beam" viewBox="0 0 720 185" height="185"></svg>
+  </div>
+  <div class="card" style="padding:10px">
+    <div class="diag-lbl" style="color:#a5b4fc">BENDING MOMENT DIAGRAM (kip-ft)</div>
+    <svg id="svg-bmd" viewBox="0 0 720 110" height="110"></svg>
+  </div>
+  <div class="card" style="padding:10px">
+    <div class="diag-lbl" style="color:#6ee7b7">SHEAR FORCE DIAGRAM (kip)</div>
+    <svg id="svg-sfd" viewBox="0 0 720 110" height="110"></svg>
+  </div>
+  <div class="card" style="padding:10px">
+    <div class="diag-lbl" style="color:var(--orange)">DEFLECTION DIAGRAM</div>
+    <svg id="svg-def" viewBox="0 0 720 90" height="90"></svg>
+  </div>
+
   <div id="status-banner" class="status-banner" style="background:#111827;border:1px solid var(--border)">⏳ SELECT SECTION</div>
   <div class="card">
     <div class="stitle">AISC 360 DESIGN CHECKS</div>
-    <table class="check-table">
-      <thead><tr><th>CHECK</th><th>CLAUSE</th><th>DEMAND</th><th>CAPACITY</th><th>UR</th><th>STATUS</th></tr></thead>
-      <tbody id="check-tbody"></tbody>
-    </table>
+    <div class="check-scroll">
+      <table class="check-table">
+        <thead><tr><th>CHECK (click for calc)</th><th>CLAUSE</th><th>DEMAND</th><th>CAPACITY</th><th>UR</th><th>STATUS</th></tr></thead>
+        <tbody id="check-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 </div>
@@ -150,10 +218,9 @@ auth.onAuthStateChanged(user=>{
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════
-// AISC W-SHAPE DATABASE — Source: AISC Steel Construction Manual,
-// 16th Edition, Table 1-1 (ASTM A992, Fy=50ksi baseline geometry).
-// Units: d,bf,tf,tw in inches; A in in²; Ix,Iy in in⁴; Sx,Zx,Sy,Zy in in³; rx,ry in in.
+// AISC W-SHAPE DATABASE — AISC Steel Construction Manual, 16th Ed.
 // [name, d, bf, tf, tw, A, Ix, Sx, Zx, rx, Iy, Sy, Zy, ry, wt(lb/ft)]
+// units: in, in2, in4, in3
 // ═══════════════════════════════════════════════════════════════
 const WSHAPES = [
 ["W8x31",7.99,7.992,0.433,0.285,9.13,110,27.5,30.4,3.47,37.1,9.28,14.1,2.02,31.0],
@@ -186,6 +253,24 @@ const WSHAPES = [
 ["W33x118",32.86,11.480,0.740,0.550,34.70,5900,359.0,415.0,13.02,187.0,32.6,49.2,2.32,118.0],
 ["W36x135",35.55,11.950,0.790,0.600,39.70,7800,439.0,509.0,14.02,225.0,37.7,57.0,2.38,135.0]
 ];
+const PLC=["#ef4444","#f97316","#a855f7","#22d3ee","#84cc16"];
+const PAD=55,W=720;
+let currentSec=null, L=20, cOver=5, pointLoads=[];
+
+// ── Fractional-inch display (nearest 1/16") — AISC convention ──
+function toFrac16(decIn){
+  if(!isFinite(decIn))return "—";
+  const sign=decIn<0?"-":"";
+  decIn=Math.abs(decIn);
+  let whole=Math.floor(decIn);
+  let sixteenths=Math.round((decIn-whole)*16);
+  if(sixteenths===16){whole+=1;sixteenths=0;}
+  if(sixteenths===0)return `${sign}${whole}"`;
+  let num=sixteenths,den=16;
+  const gcd=(a,b)=>b?gcd(b,a%b):a;
+  const g=gcd(num,den);num/=g;den/=g;
+  return whole>0?`${sign}${whole} ${num}/${den}"`:`${sign}${num}/${den}"`;
+}
 
 function populateDesig(){
   const sel=document.getElementById("secDesig");
@@ -198,123 +283,343 @@ function getSection(){
   if(!r)return null;
   return {name:r[0],d:r[1],bf:r[2],tf:r[3],tw:r[4],A:r[5],Ix:r[6],Sx:r[7],Zx:r[8],rx:r[9],Iy:r[10],Sy:r[11],Zy:r[12],ry:r[13],wt:r[14]};
 }
-
-let currentSec=null;
-function onSectionChange(){
-  currentSec=getSection();
-  updateSecProps();
-  updateAll();
-}
+function onSectionChange(){ currentSec=getSection(); updateSecProps(); updateAll(); }
 function updateSecProps(){
-  const s=currentSec;
-  if(!s)return;
+  const s=currentSec; if(!s)return;
   document.getElementById("sec-props-list").innerHTML=[
-    ["d",`${s.d} in`],["bf",`${s.bf} in`],["tf",`${s.tf} in`],["tw",`${s.tw} in`],
-    ["A",`${s.A} in²`],["Ix",`${s.Ix} in⁴`],["Zx",`${s.Zx} in³`],["ry",`${s.ry} in`],
+    ["d",toFrac16(s.d)],["bf",toFrac16(s.bf)],["tf",toFrac16(s.tf)],["tw",toFrac16(s.tw)],
+    ["A",`${s.A} in²`],["Ix",`${s.Ix} in⁴`],["Zx",`${s.Zx} in³`],["ry",toFrac16(s.ry)],
     ["Weight",`${s.wt} lb/ft`]
   ].map(([k,v])=>`<div>${k}: <b style="color:var(--text)">${v}</b></div>`).join("");
 }
 
-function runChecks(){
-  const s=currentSec;
-  if(!s)return;
-  const Fy=+document.getElementById("steelGrade").value;
-  const E=29000; // ksi
-  const L=+document.getElementById("inp-L").value||20;
-  const Lb=(+document.getElementById("inp-Lb").value||L)*12; // in
-  const Cb=+document.getElementById("inp-Cb").value||1.0;
-  const sc=document.getElementById("supCond").value;
+function showTab(id){
+  document.querySelectorAll("#load-tabs .tab").forEach((t,i)=>t.classList.toggle("active",["gravity","axial"][i]===id));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("lt-"+id).classList.add("active");
+}
+function renderPLControls(){
+  const c=document.getElementById("pl-list");c.innerHTML="";
+  pointLoads.forEach((ld,i)=>{
+    const col=PLC[i%PLC.length];
+    const d=document.createElement("div");d.className="load-block";d.style.borderColor=col+"55";
+    d.innerHTML=`<div class="load-hdr"><span style="color:${col};font-size:10px">P${i+1}</span><button class="btn-x" onclick="removePL(${i})">✕</button></div>
+      <label>Load (kip)</label><input type="number" value="${ld.P}" oninput="pointLoads[${i}].P=+this.value;updateAll()">
+      <label style="margin-top:4px">Position from A (ft)</label><input type="number" value="${ld.x}" step="0.5" oninput="pointLoads[${i}].x=+this.value;updateAll()">`;
+    c.appendChild(d);
+  });
+  document.getElementById("btn-add-pl").style.display=pointLoads.length>=5?"none":"block";
+}
+function addPL(){ if(pointLoads.length<5){pointLoads.push({P:5,x:+(L/2).toFixed(1)});renderPLControls();updateAll();} }
+function removePL(i){ pointLoads.splice(i,1);renderPLControls();updateAll(); }
+
+function getSupCond(){return document.getElementById("supCond").value;}
+function totalLen(){return getSupCond()==="OVERHANG"?L+cOver:L;}
+
+function getUDLu(){
   const wD=+document.getElementById("inp-wD").value||0;
   const wL=+document.getElementById("inp-wL").value||0;
-  const wu=1.2*wD+1.6*wL; // kip/ft, LRFD basic combo
-  const ws=wD+wL; // service, for deflection
+  return 1.2*wD+1.6*wL;
+}
+function getUDLs(){
+  return (+document.getElementById("inp-wD").value||0)+(+document.getElementById("inp-wL").value||0);
+}
+function calcReactions(){
+  const sc=getSupCond(),wu=getUDLu();
+  let RA=0,RB=0;
+  if(sc==="SS"){RA=wu*L/2;RB=wu*L/2;pointLoads.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="CANT"){RA=wu*L+pointLoads.reduce((s,{P})=>s+P,0);RB=0;}
+  else if(sc==="FIXED"){RA=wu*L/2;RB=wu*L/2;pointLoads.forEach(({P,x})=>{RA+=P*(L-x)/L;RB+=P*x/L;});}
+  else if(sc==="PROPPED"){RB=3*wu*L/8;RA=5*wu*L/8;pointLoads.forEach(({P,x})=>{RB+=P*x/L;RA+=P*(L-x)/L;});}
+  else if(sc==="OVERHANG"){const c=cOver,tL=L+c;RA=wu*tL*(tL/2-c)/L+wu*c*c/(2*L);RB=wu*tL-RA;pointLoads.forEach(({P,x})=>{if(x<=L){RB+=P*x/L;RA+=P*(L-x)/L;}});}
+  return{RA,RB};
+}
+function bmFunc(x){
+  const sc=getSupCond(),wu=getUDLu(),{RA}=calcReactions();
+  if(sc==="CANT")return -(wu*(L-x)**2/2);
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x)**2/2);}
+  let m=RA*x-wu*x*x/2;
+  pointLoads.forEach(({P,x:a})=>{if(x>a)m-=P*(x-a);});
+  if(sc==="FIXED"){m-=wu*L*L/12;}
+  return m;
+}
+function sfFunc(x){
+  const sc=getSupCond(),wu=getUDLu(),{RA}=calcReactions();
+  if(sc==="CANT"){let v=wu*(L-x);pointLoads.forEach(({P,x:a})=>{if(x<a)v+=P;});return -v;}
+  if(sc==="OVERHANG"&&x>L){const tip=L+cOver;return -(wu*(tip-x));}
+  let v=RA-wu*x;
+  pointLoads.forEach(({P,x:a})=>{if(x>a)v-=P;});
+  return v;
+}
+function defFunc(x){
+  if(!currentSec)return 0;
+  const ws=getUDLs(),E=29000,EI=E*currentSec.Ix; // kip-in2
+  const Lin=L*12,xin=x*12,sc=getSupCond();
+  let delta=0;
+  const wsi=ws/12; // kip/in
+  if(wsi>0){
+    if(sc==="SS"||sc==="OVERHANG") delta+=wsi*xin*(Lin**3-2*Lin*xin*xin+xin**3)/(24*EI);
+    else if(sc==="CANT") delta+=wsi*(6*Lin*Lin*xin*xin-4*Lin*xin**3+xin**4)/(24*EI);
+    else if(sc==="FIXED") delta+=wsi*xin*xin*(Lin-xin)**2/(24*EI);
+    else if(sc==="PROPPED") delta+=wsi*xin*(3*Lin**3-5*Lin*xin*xin+2*xin**3)/(48*EI);
+  }
+  pointLoads.forEach(({P,x:a})=>{
+    const ain=a*12,bin=Lin-ain;
+    if(ain<=0||bin<=0)return;
+    if(sc==="SS"||sc==="OVERHANG"){
+      if(xin<=ain) delta+=P*bin*xin*(Lin*Lin-bin*bin-xin*xin)/(6*Lin*EI);
+      else{const d=Lin-xin;delta+=P*ain*d*(2*Lin*d-ain*ain-d*d)/(6*Lin*EI);}
+    }else if(sc==="CANT"){
+      if(xin<=ain)delta+=P*xin*xin*(3*ain-xin)/(6*EI);
+      else delta+=P*ain*ain*(3*xin-ain)/(6*EI);
+    }
+  });
+  return Math.max(0,delta);
+}
+function maxDeflection(){
+  const N=200;let mx=0;
+  for(let i=0;i<=N;i++){const d=defFunc(i/N*L);if(d>mx)mx=d;}
+  return mx;
+}
+function sample(fn,N=200){const T=totalLen();return Array.from({length:N+1},(_,i)=>fn(i/N*T));}
 
-  let Mu,Vu;
-  if(sc==="SS"){ Mu=wu*L*L/8; Vu=wu*L/2; }
-  else { Mu=wu*L*L/2; Vu=wu*L; }
+function toX(x){return PAD+x/totalLen()*(W-2*PAD);}
+const NS="http://www.w3.org/2000/svg";
+function se(tag,attrs,txt){const el=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(txt!==undefined)el.textContent=txt;return el;}
+function clearSVG(id){const s=document.getElementById(id);while(s.firstChild)s.removeChild(s.firstChild);return s;}
 
-  const Zx=s.Zx, Sx=s.Sx, Iy=s.Iy, ry=s.ry;
+function drawBeam(){
+  const svg=clearSVG("svg-beam"),BY=92,BH=14,sc=getSupCond();
+  const{RA,RB}=calcReactions(),wu=getUDLu();
+  svg.appendChild(se("rect",{x:PAD,y:BY-BH/2,width:W-2*PAD,height:BH,rx:2,fill:"#334155",stroke:"#64748b","stroke-width":1.5}));
+  if(wu>0){
+    const n=Math.max(6,Math.floor((W-2*PAD)/20));
+    for(let i=0;i<=n;i++){const xp=PAD+i/n*(W-2*PAD);svg.appendChild(se("line",{x1:xp,y1:BY-BH/2-2,x2:xp,y2:BY-BH/2-28,stroke:"#f59e0b","stroke-width":1.5}));svg.appendChild(se("polygon",{points:`${xp},${BY-BH/2-2} ${xp-4},${BY-BH/2-12} ${xp+4},${BY-BH/2-12}`,fill:"#f59e0b"}));}
+    svg.appendChild(se("line",{x1:PAD,y1:BY-BH/2-28,x2:W-PAD,y2:BY-BH/2-28,stroke:"#f59e0b","stroke-width":2,"stroke-dasharray":"5,3"}));
+    svg.appendChild(se("text",{x:W/2,y:BY-BH/2-31,"text-anchor":"middle",fill:"#fde68a","font-size":9},`w*=${wu.toFixed(2)} kip/ft (factored)`));
+  }
+  pointLoads.forEach((ld,i)=>{
+    const xp=toX(ld.x),col=PLC[i%PLC.length],al=35;
+    svg.appendChild(se("line",{x1:xp,y1:BY-BH/2-al,x2:xp,y2:BY-BH/2-2,stroke:col,"stroke-width":2.5}));
+    svg.appendChild(se("polygon",{points:`${xp},${BY-BH/2-2} ${xp-5},${BY-BH/2-12} ${xp+5},${BY-BH/2-12}`,fill:col}));
+    svg.appendChild(se("text",{x:xp,y:BY-BH/2-al-6,"text-anchor":"middle",fill:col,"font-size":9},`P${i+1}=${ld.P}k`));
+  });
+  const dY=BY+BH/2+28;
+  svg.appendChild(se("line",{x1:PAD,y1:dY,x2:W-PAD,y2:dY,stroke:"#475569","stroke-width":1}));
+  svg.appendChild(se("text",{x:W/2,y:dY+13,"text-anchor":"middle",fill:"#475569","font-size":9},`L = ${L.toFixed(1)} ft`));
+  if(sc==="SS"||sc==="OVERHANG"||sc==="PROPPED"){
+    svg.appendChild(se("polygon",{points:`${PAD},${BY+BH/2} ${PAD-12},${BY+BH/2+18} ${PAD+12},${BY+BH/2+18}`,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("text",{x:PAD,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RA=${RA.toFixed(1)}k`));
+    const xb=sc==="OVERHANG"?toX(L):W-PAD;
+    svg.appendChild(se("circle",{cx:xb,cy:BY+BH/2+9,r:8,fill:"#22c55e",stroke:"#16a34a","stroke-width":1.5}));
+    svg.appendChild(se("text",{x:xb,y:BY+BH/2+32,"text-anchor":"middle",fill:"#86efac","font-size":8},`RB=${RB.toFixed(1)}k`));
+    if(sc==="OVERHANG"){
+      svg.appendChild(se("rect",{x:xb,y:BY-BH/2,width:Math.max(2,toX(L+cOver)-xb),height:BH,rx:2,fill:"#1e3050",stroke:"#475569","stroke-width":1.5,"stroke-dasharray":"5,3"}));
+    }
+  }else if(sc==="CANT"||sc==="FIXED"){
+    const wy=BY-BH/2-8;for(let i=0;i<6;i++)svg.appendChild(se("line",{x1:PAD-4,y1:wy+i*8,x2:PAD-18,y2:wy+i*8+10,stroke:"#94a3b8","stroke-width":1.5}));
+    svg.appendChild(se("line",{x1:PAD-4,y1:wy,x2:PAD-4,y2:wy+48,stroke:"#94a3b8","stroke-width":2}));
+    if(sc==="FIXED"){const wy2=BY-BH/2-8;for(let i=0;i<6;i++)svg.appendChild(se("line",{x1:W-PAD+4,y1:wy2+i*8,x2:W-PAD+18,y2:wy2+i*8+10,stroke:"#94a3b8","stroke-width":1.5}));svg.appendChild(se("line",{x1:W-PAD+4,y1:wy2,x2:W-PAD+4,y2:wy2+48,stroke:"#94a3b8","stroke-width":2}));}
+  }
+}
+function drawBMD(){
+  const svg=clearSVG("svg-bmd"),BY=78,N=200;
+  const vals=sample(bmFunc,N),maxV=Math.max(...vals.map(Math.abs),0.001),sc=58/maxV;
+  let d=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++)d+=` L${toX(i/N*totalLen())},${BY-vals[i]*sc}`;d+=` L${toX(totalLen())},${BY} Z`;
+  svg.appendChild(se("path",{d,fill:"#818cf866",stroke:"#818cf8","stroke-width":2}));
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5}));
+  const maxIdx=vals.indexOf(Math.max(...vals)),maxVal=vals[maxIdx];
+  if(Math.abs(maxVal)>0.01){const mx=toX(maxIdx/N*totalLen()),my=BY-maxVal*sc;svg.appendChild(se("text",{x:mx,y:my-8,"text-anchor":"middle",fill:"#c7d2fe","font-size":9},`${maxVal.toFixed(1)} k-ft`));}
+}
+function drawSFD(){
+  const svg=clearSVG("svg-sfd"),BY=65,N=200;
+  const vals=sample(sfFunc,N),maxV=Math.max(...vals.map(Math.abs),0.001),sc=48/maxV;
+  let dl=`M${toX(0)},${BY-vals[0]*sc}`;for(let i=1;i<=N;i++)dl+=` L${toX(i/N*totalLen())},${BY-vals[i]*sc}`;
+  svg.appendChild(se("path",{d:dl,fill:"none",stroke:"#34d399","stroke-width":2}));
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5}));
+  svg.appendChild(se("text",{x:PAD+24,y:BY-vals[0]*sc-6,"text-anchor":"middle",fill:"#6ee7b7","font-size":9},`${vals[0].toFixed(1)}`));
+  svg.appendChild(se("text",{x:W-PAD-24,y:BY-vals[N]*sc+14,"text-anchor":"middle",fill:"#fca5a5","font-size":9},`${vals[N].toFixed(1)}`));
+}
+function drawDEF(){
+  const svg=clearSVG("svg-def"),BY=35,N=200;
+  const delta_max=maxDeflection();
+  if(delta_max<0.001){svg.appendChild(se("text",{x:W/2,y:45,"text-anchor":"middle",fill:"var(--muted)","font-size":10},"No deflection"));return;}
+  const scale=38/Math.max(delta_max,0.1);
+  svg.appendChild(se("line",{x1:PAD,y1:BY,x2:W-PAD,y2:BY,stroke:"#334155","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+  let dp=`M${toX(0)},${BY}`;for(let i=0;i<=N;i++){const x=i/N*L;dp+=` L${toX(x)},${BY+defFunc(x)*scale}`;}dp+=` L${toX(L)},${BY} Z`;
+  svg.appendChild(se("path",{d:dp,fill:"#fb923c55",stroke:"#fb923c","stroke-width":2}));
+  svg.appendChild(se("text",{x:W/2,y:BY+50,"text-anchor":"middle",fill:"#fb923c","font-size":9},`δmax = ${toFrac16(delta_max)}`));
+}
+
+function runChecks(){
+  const s=currentSec; if(!s)return;
+  const Fy=+document.getElementById("steelGrade").value;
+  const E=29000,G=11200;
+  const Lb=(+document.getElementById("inp-Lb").value||L)*12;
+  const K=+document.getElementById("inp-K").value||1.0;
+  const Cb=+document.getElementById("inp-Cb").value||1.0;
+  const sc=getSupCond();
+  const PuC=+document.getElementById("inp-Pu-c").value||0;
+  const PuT=+document.getElementById("inp-Pu-t").value||0;
+
+  const bmVals=sample(bmFunc),sfVals=sample(sfFunc);
+  const Mu=Math.max(...bmVals.map(Math.abs));
+  const Vu=Math.max(...sfVals.map(Math.abs));
+  const delta=maxDeflection();
+
+  document.getElementById("cr-Mu").textContent=Mu.toFixed(1);
+  document.getElementById("cr-Vu").textContent=Vu.toFixed(1);
+  document.getElementById("cr-def").textContent=toFrac16(delta);
+  const {RA,RB}=calcReactions();
+  document.getElementById("cr-RA").textContent=RA.toFixed(1);
+  document.getElementById("cr-RB").textContent=RB.toFixed(1);
+
+  // ── CHECK 1: Flexural — Ch F2 ──
+  const Zx=s.Zx,Sx=s.Sx,Iy=s.Iy,ry=s.ry;
   const Mp=Fy*Zx/12;
   const eps=Math.sqrt(E/Fy);
-  const lambda_f=(s.bf/2)/s.tf;
-  const compactFlange = lambda_f<=0.38*eps;
+  const compactFlange=(s.bf/2)/s.tf<=0.38*eps;
   const h_tw=(s.d-2*s.tf)/s.tw;
-  const compactWeb = h_tw<=3.76*eps;
-  const compact = compactFlange && compactWeb;
-
+  const compactWeb=h_tw<=3.76*eps;
+  const compact=compactFlange&&compactWeb;
   const ho=s.d-s.tf;
-  const rts=Math.sqrt(Math.sqrt(Iy*ho)/(2*Sx))||ry;
+  // rts² = sqrt(Iy·Cw)/Sx, with Cw≈Iy·ho²/4 for doubly-symmetric I-shapes
+  // → rts = sqrt(Iy·ho/(2·Sx))  (previous version had an incorrect double sqrt — fixed)
+  const rts=Math.sqrt((Iy*ho)/(2*Sx))||ry;
+  // Torsional constant J via thin-walled open-section approximation (no fillet correction):
+  // J ≈ (1/3)·Σ(b·t³) = (1/3)·[2·bf·tf³ + (d−2tf)·tw³]
+  const Jc=(1/3)*(2*s.bf*Math.pow(s.tf,3)+(s.d-2*s.tf)*Math.pow(s.tw,3));
   const Lp=1.76*ry*Math.sqrt(E/Fy);
-  const term=(0.7*Fy)/E*(s.bf*s.tf*ho)/(2*Sx);
+  const term=(Jc*1.0)/(Sx*ho);
   const Lr=1.95*rts*(E/(0.7*Fy))*Math.sqrt(term+Math.sqrt(term*term+6.76*Math.pow((0.7*Fy)/E,2)));
-
   let Mn_ltb;
-  if(Lb<=Lp){ Mn_ltb=Mp; }
-  else if(Lb<=Lr){
-    Mn_ltb=Math.min(Cb*(Mp-(Mp-0.7*Fy*Sx/12)*((Lb-Lp)/(Lr-Lp))),Mp);
-  }else{
-    const Fcr=(Cb*Math.PI*Math.PI*E)/Math.pow(Lb/rts,2)*Math.sqrt(1+0.078*(s.bf*s.tf*ho)/(2*Sx)*Math.pow(Lb/rts,2));
-    Mn_ltb=Math.min(Fcr*Sx/12,Mp);
-  }
+  if(Lb<=Lp){Mn_ltb=Mp;}
+  else if(Lb<=Lr){Mn_ltb=Math.min(Cb*(Mp-(Mp-0.7*Fy*Sx/12)*((Lb-Lp)/(Lr-Lp))),Mp);}
+  else{const Fcr_ltb=(Cb*Math.PI*Math.PI*E)/Math.pow(Lb/rts,2)*Math.sqrt(1+0.078*(Jc*1.0)/(Sx*ho)*Math.pow(Lb/rts,2));Mn_ltb=Math.min(Fcr_ltb*Sx/12,Mp);}
   const Mn=compact?Mn_ltb:Mn_ltb*0.9;
-  const phi_b=0.90;
-  const phiMn=phi_b*Mn;
+  const phiMn=0.90*Mn;
   const UR_flex=Mu/Math.max(phiMn,0.001);
 
+  // ── CHECK 2: Shear — Ch G2.1 ──
   const Aw=s.d*s.tw;
-  const kv=5.34;
   const h_tw_lim1=2.24*Math.sqrt(E/Fy);
-  let Cv1;
-  if(h_tw<=h_tw_lim1){ Cv1=1.0; }
-  else {
-    const h_tw_lim2=1.10*Math.sqrt(kv*E/Fy);
-    Cv1 = h_tw<=h_tw_lim2 ? 1.0 : (1.10*Math.sqrt(kv*E/Fy))/h_tw;
-  }
+  let Cv1=h_tw<=h_tw_lim1?1.0:(h_tw<=1.10*Math.sqrt(5.34*E/Fy)?1.0:(1.10*Math.sqrt(5.34*E/Fy))/h_tw);
   const phi_v=h_tw<=h_tw_lim1?1.00:0.90;
   const Vn=0.6*Fy*Aw*Cv1;
   const phiVn=phi_v*Vn;
   const UR_shear=Vu/Math.max(phiVn,0.001);
 
-  const EI=E*s.Ix;
-  const Lin=L*12;
-  let delta;
-  if(sc==="SS") delta=5*(ws/12)*Math.pow(Lin,4)/(384*EI);
-  else delta=(ws/12)*Math.pow(Lin,4)/(8*EI);
+  // ── CHECK 3: Deflection ──
   const deflRatio=+document.getElementById("deflLimit").value;
-  const deflAllow=Lin/deflRatio;
+  const deflAllow=(L*12)/deflRatio;
   const UR_defl=delta/deflAllow;
 
-  document.getElementById("cr-Mu").textContent=Mu.toFixed(1);
-  document.getElementById("cr-Vu").textContent=Vu.toFixed(1);
-  document.getElementById("cr-def").textContent=delta.toFixed(3);
+  // ── CHECK 4: Compression — Ch E3 (flexural buckling) ──
+  const KLr_x=(K*L*12)/s.rx, KLr_y=(K*L*12)/s.ry;
+  const KLr=Math.max(KLr_x,KLr_y);
+  const Fe=(Math.PI**2*E)/(KLr**2);
+  const lim=4.71*Math.sqrt(E/Fy);
+  const Fcr=KLr<=lim?Math.pow(0.658,Fy/Fe)*Fy:0.877*Fe;
+  const Pn_c=Fcr*s.A;
+  const phiPn_c=0.90*Pn_c;
+  const UR_comp=PuC>0?PuC/phiPn_c:0;
+
+  // ── CHECK 5: Tension — Ch D2 (yielding) ──
+  const Pn_t=Fy*s.A;
+  const phiPn_t=0.90*Pn_t;
+  const UR_tens=PuT>0?PuT/phiPn_t:0;
+
+  // ── CHECK 6: Combined axial + flexure — Ch H1.1 ──
+  const Pr=PuC>0?PuC:PuT;
+  const Pc=PuC>0?phiPn_c:phiPn_t;
+  let UR_combined=0,combinedActive=false;
+  if(Pr>0.1){
+    combinedActive=true;
+    const ratio=Pr/Math.max(Pc,0.001);
+    if(ratio>=0.2) UR_combined=ratio+(8/9)*(Mu/Math.max(phiMn,0.001));
+    else UR_combined=ratio/2+(Mu/Math.max(phiMn,0.001));
+  }
 
   const checks=[
-    {name:"Flexural Yielding + LTB",clause:"AISC 360 Ch. F2",demand:`${Mu.toFixed(1)} kip-ft`,capacity:`${phiMn.toFixed(1)} kip-ft`,ur:UR_flex},
-    {name:"Shear",clause:"AISC 360 Ch. G2.1",demand:`${Vu.toFixed(1)} kip`,capacity:`${phiVn.toFixed(1)} kip`,ur:UR_shear},
-    {name:"Deflection",clause:"Serviceability",demand:`${delta.toFixed(3)} in`,capacity:`${deflAllow.toFixed(3)} in (L/${deflRatio})`,ur:UR_defl}
+    {name:"Flexural Yielding + LTB",clause:"AISC 360 Ch. F2",demand:`${Mu.toFixed(1)} kip-ft`,capacity:`${phiMn.toFixed(1)} kip-ft`,ur:UR_flex,active:Mu>0.01,
+     calc:`Section: ${compact?"Compact":"Non-compact (approx reduction)"}\nMp = Fy·Zx = ${Fy}×${Zx}/12 = ${Mp.toFixed(1)} kip-ft\nLp=${(Lp/12).toFixed(2)} ft, Lr=${isFinite(Lr)?(Lr/12).toFixed(2):"N/A"} ft, Lb=${(Lb/12).toFixed(2)} ft\nMn(LTB)=${Mn_ltb.toFixed(1)} kip-ft\nφb·Mn=0.90×${Mn.toFixed(1)}=${phiMn.toFixed(1)} kip-ft\nUR=Mu/φMn=${UR_flex.toFixed(3)}`},
+    {name:"Shear",clause:"AISC 360 Ch. G2.1",demand:`${Vu.toFixed(1)} kip`,capacity:`${phiVn.toFixed(1)} kip`,ur:UR_shear,active:Vu>0.01,
+     calc:`Aw=d·tw=${toFrac16(s.d)}×${toFrac16(s.tw)}=${Aw.toFixed(2)} in²\nh/tw=${h_tw.toFixed(1)}, Cv1=${Cv1.toFixed(3)}\nVn=0.6FyAwCv1=${Vn.toFixed(1)} kip\nφvVn=${phi_v}×${Vn.toFixed(1)}=${phiVn.toFixed(1)} kip\nUR=${UR_shear.toFixed(3)}`},
+    {name:"Deflection",clause:"Serviceability",demand:toFrac16(delta),capacity:`${toFrac16(deflAllow)} (L/${deflRatio})`,ur:UR_defl,active:true,
+     calc:`δ=${toFrac16(delta)} (${delta.toFixed(3)} in)\nAllowable=L/${deflRatio}=${deflAllow.toFixed(3)} in\nUR=${UR_defl.toFixed(3)}`},
+    {name:"Compression",clause:"AISC 360 Ch. E3",demand:`${PuC.toFixed(1)} kip`,capacity:`${phiPn_c.toFixed(1)} kip`,ur:UR_comp,active:PuC>0.1,
+     calc:`KL/r: x=${KLr_x.toFixed(1)}, y=${KLr_y.toFixed(1)} → governing=${KLr.toFixed(1)}\nFe=π²E/(KL/r)²=${Fe.toFixed(1)} ksi\nLimit 4.71√(E/Fy)=${lim.toFixed(1)}\nFcr=${Fcr.toFixed(2)} ksi\nPn=Fcr·Ag=${Pn_c.toFixed(1)} kip\nφcPn=0.90×${Pn_c.toFixed(1)}=${phiPn_c.toFixed(1)} kip\nUR=${UR_comp.toFixed(3)}`},
+    {name:"Tension (Yielding)",clause:"AISC 360 Ch. D2",demand:`${PuT.toFixed(1)} kip`,capacity:`${phiPn_t.toFixed(1)} kip`,ur:UR_tens,active:PuT>0.1,
+     calc:`Pn=Fy·Ag=${Fy}×${s.A}=${Pn_t.toFixed(1)} kip\nφtPn=0.90×${Pn_t.toFixed(1)}=${phiPn_t.toFixed(1)} kip\nUR=${UR_tens.toFixed(3)}\n(Note: rupture check on net area not included — verify connections separately)`},
+    {name:"Combined Axial + Flexure",clause:"AISC 360 Ch. H1.1",demand:`Pr=${Pr.toFixed(1)}k, Mu=${Mu.toFixed(1)}k-ft`,capacity:`Pc=${Pc.toFixed(1)}k, Mc=${phiMn.toFixed(1)}k-ft`,ur:UR_combined,active:combinedActive,
+     calc:`Pr/Pc = ${(Pr/Math.max(Pc,0.001)).toFixed(3)}\n${(Pr/Math.max(Pc,0.001))>=0.2?"Eq. H1-1a (Pr/Pc≥0.2): Pr/Pc + 8/9(Mrx/Mcx)":"Eq. H1-1b (Pr/Pc<0.2): Pr/2Pc + (Mrx/Mcx)"}\nUR=${UR_combined.toFixed(3)}`}
   ];
 
   const tbody=document.getElementById("check-tbody");
-  tbody.innerHTML=checks.map(c=>{
-    const status=c.ur<=0.75?"✅ PASS":c.ur<=1.0?"⚠ PASS":"❌ FAIL";
-    const cls=c.ur<=1.0?"pass":"fail";
-    const color=c.ur<=0.75?"#22c55e":c.ur<=1.0?"#f59e0b":"#ef4444";
-    return `<tr><td>${c.name}</td><td style="color:var(--muted)">${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td>
-    <td style="color:${color};font-weight:bold">${c.ur.toFixed(3)}</td><td class="${cls}">${status}</td></tr>`;
-  }).join("");
+  tbody.innerHTML="";
+  checks.forEach((c,i)=>{
+    const ur=c.active?c.ur:null;
+    const urStr=ur!==null?ur.toFixed(3):"N/A";
+    const status=ur===null?"N/A":ur<=0.75?"✅ PASS":ur<=1.0?"⚠ PASS":"❌ FAIL";
+    const color=ur===null?"#334155":ur<=0.75?"#22c55e":ur<=1.0?"#f59e0b":"#ef4444";
+    const cls=ur===null?"na":ur<=1.0?"pass":"fail";
+    const fillPct=ur!==null?Math.min(ur*100,100).toFixed(1):0;
+    const tr=document.createElement("tr");
+    tr.style.cursor="pointer";
+    tr.onclick=()=>{const dr=document.getElementById("cd-"+i);dr.style.display=dr.style.display==="none"?"table-row":"none";};
+    tr.innerHTML=`<td>${c.name} <span style="color:var(--muted);font-size:9px">▸</span></td><td style="color:var(--muted)">${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td>
+      <td><div style="color:${color};font-weight:bold">${urStr}</div><div class="urbar-wrap"><div class="urbar"><div class="urbar-fill" style="width:${fillPct}%;background:${color}"></div></div></div></td>
+      <td class="${cls}" style="font-size:10px">${status}</td>`;
+    tbody.appendChild(tr);
+    const dr=document.createElement("tr");dr.id="cd-"+i;dr.style.display="none";
+    dr.innerHTML=`<td colspan="6" style="background:#0b1120;padding:10px;border-bottom:2px solid ${color}"><pre style="white-space:pre-wrap;font-size:10px;color:#cbd5e1;margin:0">${c.active?c.calc:"Not active for current inputs."}</pre></td>`;
+    tbody.appendChild(dr);
+  });
 
-  const govUR=Math.max(...checks.map(c=>c.ur));
+  const govUR=Math.max(...checks.filter(c=>c.active).map(c=>c.ur),0);
   const banner=document.getElementById("status-banner");
-  if(govUR<=1.0){banner.textContent=`✅ SECTION ADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#052e16;border-color:#22c55e;color:#22c55e;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;border:1px solid";}
-  else{banner.textContent=`❌ SECTION INADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#1c0a0a;border-color:#ef4444;color:#ef4444;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;border:1px solid";}
+  if(govUR<=0.001){banner.textContent="⏳ ADD LOADS TO BEGIN";banner.style.cssText="background:#111827;border:1px solid var(--border);padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;color:var(--muted)";}
+  else if(govUR<=1.0){banner.textContent=`✅ SECTION ADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#052e16;border:1px solid #22c55e;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;color:#22c55e";}
+  else{banner.textContent=`❌ SECTION INADEQUATE — Governing UR = ${govUR.toFixed(3)}`;banner.style.cssText="background:#1c0a0a;border:1px solid #ef4444;padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px;color:#ef4444";}
+  return checks;
+}
+
+function generatePDFReport(){
+  if(!currentSec){alert("Select a W-shape first.");return;}
+  const checks=runChecks();
+  const rows=checks.map(c=>{
+    const ur=c.active?c.ur:null;
+    const status=ur===null?"N/A":ur<=1.0?"PASS":"FAIL";
+    return `<tr><td>${c.name}</td><td>${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td><td>${ur!==null?ur.toFixed(3):"N/A"}</td><td>${status}</td></tr>`;
+  }).join("");
+  document.getElementById("print-report").innerHTML=`
+    <h2>AISC 360 — Steel Beam Design Report</h2>
+    <p><b>Section:</b> ${currentSec.name} &nbsp; <b>Grade:</b> Fy=${document.getElementById("steelGrade").value} ksi &nbsp; <b>Span:</b> ${L} ft</p>
+    <table border="1" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11px">
+      <tr style="background:#eee"><th>Check</th><th>Clause</th><th>Demand</th><th>Capacity</th><th>UR</th><th>Status</th></tr>
+      ${rows}
+    </table>
+    <p style="margin-top:16px;font-size:10px;color:#777">BETA tool — independently verify against AISC 360 before construction use.</p>
+  `;
+  window.print();
 }
 
 function updateAll(){
+  const numL=document.getElementById("inp-L");
+  L=+numL.value||20; if(L<=0)L=1;
+  const sc=getSupCond();
+  document.getElementById("overhang-row").style.display=sc==="OVERHANG"?"block":"none";
+  cOver=+document.getElementById("inp-c").value||5;
+  pointLoads=pointLoads.map(ld=>({...ld,x:Math.min(ld.x,L-0.5)}));
+  renderPLControls();
+  drawBeam();drawBMD();drawSFD();drawDEF();
   if(currentSec)runChecks();
 }
 
 populateDesig();
 onSectionChange();
+renderPLControls();
+updateAll();
 </script>
 </body>
 </html>
