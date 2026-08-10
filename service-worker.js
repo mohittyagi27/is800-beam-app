@@ -1,4 +1,4 @@
-const CACHE_NAME = "is800-beam-checker-v22";
+const CACHE_NAME = "is800-beam-checker-v23";
 const ASSETS = [
   "./",
   "./index.html",
