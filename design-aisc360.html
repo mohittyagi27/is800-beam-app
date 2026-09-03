@@ -69,7 +69,18 @@ svg{display:block;width:100%;overflow:visible}
 .status-banner{padding:10px 14px;border-radius:6px;text-align:center;font-size:14px;letter-spacing:2px;font-weight:bold;margin-bottom:8px}
 .btn-calc{width:100%;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-size:12px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:1px}
 .check-scroll{max-height:420px;overflow-y:auto}
-@media print{ body *{visibility:hidden} #print-report,#print-report *{visibility:visible} #print-report{display:block !important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111;font-family:Arial;padding:20px} }
+@media print{
+  body *{visibility:hidden}
+  #print-report, #print-report *{visibility:visible}
+  #print-report{display:block !important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;padding:20px}
+  #print-report h2{font-size:18px;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:10px}
+  #print-report h3{font-size:13px;color:#333;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+  #print-report table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11px}
+  #print-report svg{background:#fff;border:1px solid #ccc;margin:6px 0;width:100%;height:auto}
+  #print-report .rpt-pass{color:#0a7a0a;font-weight:bold}
+  #print-report .rpt-warn{color:#b8860b;font-weight:bold}
+  #print-report .rpt-fail{color:#c0392b;font-weight:bold}
+}
 </style>
 </head>
 <body>
@@ -107,17 +118,37 @@ svg{display:block;width:100%;overflow:visible}
     <div class="stitle">SECTION TYPE</div>
     <div class="form-row">
       <label>Profile Family</label>
-      <select id="secFamily"><option value="W">W — Wide Flange Shape</option></select>
+      <select id="secFamily" onchange="onFamilyChange()">
+        <option value="W">W — Wide Flange Shape</option>
+        <option value="BUILDUP">Built-Up I Section</option>
+      </select>
     </div>
-    <div class="form-row">
+    <div id="std-sec-row" class="form-row">
       <label>Section Designation</label>
       <select id="secDesig" onchange="onSectionChange()"></select>
     </div>
+    <div id="buildup-rows" style="display:none">
+      <div class="stitle">BUILT-UP PLATE SIZES (in)</div>
+      <div class="form-2col">
+        <div class="form-row"><label>Top Flange Width bf1 (in)</label><input type="number" id="bu_bf1" value="10" step="0.1" oninput="onBUChange()"></div>
+        <div class="form-row"><label>Top Flange Thick tf1 (in)</label><input type="number" id="bu_tf1" value="0.625" step="0.0625" oninput="onBUChange()"></div>
+      </div>
+      <div class="form-row"><label>Web Depth (clear) dw (in)</label><input type="number" id="bu_dw" value="20" step="0.1" oninput="onBUChange()"></div>
+      <div class="form-row"><label>Web Thickness tw (in)</label><input type="number" id="bu_tw" value="0.375" step="0.0625" oninput="onBUChange()"></div>
+      <div class="form-2col">
+        <div class="form-row"><label>Bot Flange Width bf2 (in)</label><input type="number" id="bu_bf2" value="10" step="0.1" oninput="onBUChange()"></div>
+        <div class="form-row"><label>Bot Flange Thick tf2 (in)</label><input type="number" id="bu_tf2" value="0.625" step="0.0625" oninput="onBUChange()"></div>
+      </div>
+    </div>
     <div class="form-row">
-      <label>Steel Grade</label>
+      <label>Material / Steel Grade</label>
       <select id="steelGrade" onchange="onSectionChange()">
-        <option value="50">A992 — Fy=50 ksi (most common)</option>
-        <option value="36">A36 — Fy=36 ksi</option>
+        <option value="50">A992 — Fy=50 ksi (W-shapes, most common)</option>
+        <option value="36">A36 — Fy=36 ksi (plates, angles)</option>
+        <option value="42">A572 Gr.42 — Fy=42 ksi</option>
+        <option value="60">A572 Gr.60 — Fy=60 ksi</option>
+        <option value="65">A572 Gr.65 — Fy=65 ksi</option>
+        <option value="70">A514 — Fy=70 ksi (quenched & tempered)</option>
       </select>
     </div>
     <div id="sec-props-list" style="font-size:10px;color:#94a3b8;line-height:1.8;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"></div>
@@ -178,9 +209,39 @@ svg{display:block;width:100%;overflow:visible}
     </div>
 
     <div class="tab-panel active" id="lt-gravity">
-      <div class="form-row"><label>Dead Load wD (kip/ft)</label><input type="number" id="inp-wD" value="0.5" step="0.05" oninput="updateAll()"></div>
-      <div class="form-row"><label>Live Load wL (kip/ft)</label><input type="number" id="inp-wL" value="1.0" step="0.05" oninput="updateAll()"></div>
-      <div class="form-row"><label>Wind Load wW (kip/ft)</label><input type="number" id="inp-wW" value="0" step="0.05" oninput="updateAll()"></div>
+      <div class="tog-row" onclick="toggleLoad('D')">
+        <span>Dead Load (D) — UDL</span>
+        <div class="tog-sw" id="sw-D" style="background:var(--dim)"><div class="tog-kn" id="kn-D" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-D" style="display:none">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;color:#94a3b8">wD</span><span style="font-size:12px;font-weight:bold;color:#94a3b8" id="val-wD">0.5 kip/ft</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wD" min="0.05" max="10" step="0.05" value="0.5" oninput="document.getElementById('num-wD').value=this.value;updateAll()" style="flex:1">
+          <input type="number" id="num-wD" min="0" step="0.05" value="0.5" style="width:64px" oninput="extendRange('sl-wD',this.value);document.getElementById('sl-wD').value=this.value;updateAll()">
+        </div>
+      </div>
+      <div class="tog-row" onclick="toggleLoad('L')">
+        <span>Live Load (L) — UDL</span>
+        <div class="tog-sw" id="sw-L" style="background:var(--dim)"><div class="tog-kn" id="kn-L" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-L" style="display:none">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;color:#94a3b8">wL</span><span style="font-size:12px;font-weight:bold;color:#f59e0b" id="val-wL">1.0 kip/ft</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wL" min="0.05" max="10" step="0.05" value="1.0" oninput="document.getElementById('num-wL').value=this.value;updateAll()" style="flex:1">
+          <input type="number" id="num-wL" min="0" step="0.05" value="1.0" style="width:64px" oninput="extendRange('sl-wL',this.value);document.getElementById('sl-wL').value=this.value;updateAll()">
+        </div>
+      </div>
+      <div class="tog-row" onclick="toggleLoad('W')">
+        <span>Wind Load (W) — UDL</span>
+        <div class="tog-sw" id="sw-W" style="background:var(--dim)"><div class="tog-kn" id="kn-W" style="left:2px"></div></div>
+      </div>
+      <div id="ctrl-W" style="display:none">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;color:#94a3b8">wW</span><span style="font-size:12px;font-weight:bold;color:#38bdf8" id="val-wW">0.3 kip/ft</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="range" id="sl-wW" min="0.05" max="10" step="0.05" value="0.3" oninput="document.getElementById('num-wW').value=this.value;updateAll()" style="flex:1">
+          <input type="number" id="num-wW" min="0" step="0.05" value="0.3" style="width:64px" oninput="extendRange('sl-wW',this.value);document.getElementById('sl-wW').value=this.value;updateAll()">
+        </div>
+      </div>
       <div class="stitle" style="margin-top:10px">POINT LOADS</div>
       <div id="pl-list"></div>
       <button class="btn-add" onclick="addPL()" id="btn-add-pl">+ Add Point Load</button>
@@ -230,18 +291,25 @@ svg{display:block;width:100%;overflow:visible}
   </div>
 
   <div class="card" style="padding:10px">
-    <div class="diag-lbl">BEAM DIAGRAM</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span class="diag-lbl" style="margin:0">BEAM DIAGRAM</span>
+      <div style="display:flex;gap:6px">
+        <button class="tab" id="btog-bmd" onclick="toggleBMD()" style="border-color:#818cf8;background:#1e1b4b;color:#a5b4fc;padding:3px 8px;font-size:9px">BMD ✓</button>
+        <button class="tab" id="btog-sfd" onclick="toggleSFD()" style="border-color:#34d399;background:#052e16;color:#6ee7b7;padding:3px 8px;font-size:9px">SFD ✓</button>
+        <button class="tab" id="btog-def" onclick="toggleDEF()" style="border-color:#fb923c;background:#1c1008;color:#fb923c;padding:3px 8px;font-size:9px">DEF ✓</button>
+      </div>
+    </div>
     <svg id="svg-beam" viewBox="0 0 720 185" height="185"></svg>
   </div>
-  <div class="card" style="padding:10px">
+  <div class="card" style="padding:10px" id="bmd-card">
     <div class="diag-lbl" style="color:#a5b4fc">BENDING MOMENT DIAGRAM (kip-ft)</div>
     <svg id="svg-bmd" viewBox="0 0 720 110" height="110"></svg>
   </div>
-  <div class="card" style="padding:10px">
+  <div class="card" style="padding:10px" id="sfd-card">
     <div class="diag-lbl" style="color:#6ee7b7">SHEAR FORCE DIAGRAM (kip)</div>
     <svg id="svg-sfd" viewBox="0 0 720 110" height="110"></svg>
   </div>
-  <div class="card" style="padding:10px">
+  <div class="card" style="padding:10px" id="def-card">
     <div class="diag-lbl" style="color:var(--orange)">DEFLECTION DIAGRAM</div>
     <svg id="svg-def" viewBox="0 0 720 90" height="90"></svg>
   </div>
@@ -301,7 +369,44 @@ const WSHAPES = [
 ];
 const PLC=["#ef4444","#f97316","#a855f7","#22d3ee","#84cc16"];
 const PAD=55,W=720;
-let currentSec=null, L=20, cOver=5, pointLoads=[], pointLoadsH=[];
+let currentSec=null, L=20, cOver=5, pointLoads=[], pointLoadsH=[], isBuiltUp=false;
+let activeLoads={D:false,L:false,W:false};
+let showBMD=true, showSFD=true, showDEF=true;
+
+function extendRange(sliderId,val){
+  const el=document.getElementById(sliderId);
+  val=+val; if(isNaN(val))return;
+  if(val>+el.max)el.max=val;
+  if(val<+el.min)el.min=val;
+  el.value=val;
+}
+function toggleLoad(id){
+  activeLoads[id]=!activeLoads[id];
+  const on=activeLoads[id],col=id==="D"?"#94a3b8":id==="L"?"#f59e0b":"#38bdf8";
+  document.getElementById("sw-"+id).style.background=on?col:"var(--dim)";
+  document.getElementById("kn-"+id).style.left=on?"16px":"2px";
+  document.getElementById("ctrl-"+id).style.display=on?"block":"none";
+  updateAll();
+}
+function onFamilyChange(){
+  isBuiltUp=(document.getElementById("secFamily").value==="BUILDUP");
+  document.getElementById("std-sec-row").style.display=isBuiltUp?"none":"block";
+  document.getElementById("buildup-rows").style.display=isBuiltUp?"block":"none";
+  onSectionChange();
+}
+function onBUChange(){ onSectionChange(); }
+function getBuiltUpProps(){
+  const bf1=+document.getElementById("bu_bf1").value||10, tf1=+document.getElementById("bu_tf1").value||0.625;
+  const dw=+document.getElementById("bu_dw").value||20, tw=+document.getElementById("bu_tw").value||0.375;
+  const bf2=+document.getElementById("bu_bf2").value||10, tf2=+document.getElementById("bu_tf2").value||0.625;
+  const d=tf1+dw+tf2, A=bf1*tf1+bf2*tf2+dw*tw, yCG=d/2;
+  const Ix=((bf1*tf1**3/12+bf1*tf1*(d-tf1/2-yCG)**2)+(tw*dw**3/12)+(bf2*tf2**3/12+bf2*tf2*(tf2/2-yCG)**2));
+  const Iy=(bf1**3*tf1/12+bf2**3*tf2/12+dw*tw**3/12);
+  const Sx=Ix/(d/2), Zx=Sx*1.12, Sy=Iy/(Math.max(bf1,bf2)/2), Zy=Sy*1.5;
+  const rx=Math.sqrt(Ix/A), ry=Math.sqrt(Iy/A);
+  const wt=A*3.4;
+  return {name:`BU ${d.toFixed(1)}x${bf1.toFixed(1)}`,d,bf:Math.max(bf1,bf2),tf:Math.max(tf1,tf2),tw,A,Ix,Sx,Zx,rx,Iy,Sy,Zy,ry,wt};
+}
 
 function toFrac16(decIn){
   if(!isFinite(decIn))return "—";
@@ -323,6 +428,7 @@ function populateDesig(){
   sel.selectedIndex=Math.floor(WSHAPES.length/2);
 }
 function getSection(){
+  if(isBuiltUp)return getBuiltUpProps();
   const name=document.getElementById("secDesig").value;
   const r=WSHAPES.find(x=>x[0]===name);
   if(!r)return null;
@@ -333,8 +439,8 @@ function updateSecProps(){
   const s=currentSec; if(!s)return;
   document.getElementById("sec-props-list").innerHTML=[
     ["d",toFrac16(s.d)],["bf",toFrac16(s.bf)],["tf",toFrac16(s.tf)],["tw",toFrac16(s.tw)],
-    ["A",`${s.A} in²`],["Ix",`${s.Ix} in⁴`],["Zx",`${s.Zx} in³`],["Zy",`${s.Zy} in³`],
-    ["rx",toFrac16(s.rx)],["ry",toFrac16(s.ry)],["Weight",`${s.wt} lb/ft`]
+    ["A",`${s.A.toFixed(2)} in²`],["Ix",`${s.Ix.toFixed(0)} in⁴`],["Zx",`${s.Zx.toFixed(1)} in³`],["Zy",`${s.Zy.toFixed(1)} in³`],
+    ["rx",toFrac16(s.rx)],["ry",toFrac16(s.ry)],["Weight",`${s.wt.toFixed(1)} lb/ft`]
   ].map(([k,v])=>`<div class="sp">${k}: <b style="color:var(--text)">${v}</b></div>`).join("");
 }
 
@@ -378,10 +484,16 @@ function totalLen(){return getSupCond()==="OVERHANG"?L+cOver:L;}
 
 function getUDLu(){
   const gD=+document.getElementById("lf-D").value||1.2, gL=+document.getElementById("lf-L").value||1.6, gW=+document.getElementById("lf-W").value||1.0;
-  const wD=+document.getElementById("inp-wD").value||0, wL=+document.getElementById("inp-wL").value||0, wW=+document.getElementById("inp-wW").value||0;
+  const wD=activeLoads.D?(+document.getElementById("sl-wD").value||0):0;
+  const wL=activeLoads.L?(+document.getElementById("sl-wL").value||0):0;
+  const wW=activeLoads.W?(+document.getElementById("sl-wW").value||0):0;
   return Math.max(gD*wD+gL*wL, gD*wD+gW*wW+wL, 1.2*wD+1.0*wW+wL);
 }
-function getUDLs(){ return (+document.getElementById("inp-wD").value||0)+(+document.getElementById("inp-wL").value||0); }
+function getUDLs(){
+  const wD=activeLoads.D?(+document.getElementById("sl-wD").value||0):0;
+  const wL=activeLoads.L?(+document.getElementById("sl-wL").value||0):0;
+  return wD+wL;
+}
 function getUDLu_H(){
   const gW=+document.getElementById("lf-W").value||1.0;
   return gW*(+document.getElementById("inp-wHz").value||0);
@@ -513,6 +625,24 @@ function drawDEF(){
   svg.appendChild(se("text",{x:W/2,y:BY+50,"text-anchor":"middle",fill:"#fb923c","font-size":9},`δmax = ${toFrac16(delta_max)}`));
 }
 
+function toggleBMD(){showBMD=!showBMD;document.getElementById("bmd-card").style.display=showBMD?"block":"none";const b=document.getElementById("btog-bmd");b.textContent=`BMD ${showBMD?"✓":"○"}`;b.style.background=showBMD?"#1e1b4b":"transparent";}
+function toggleSFD(){showSFD=!showSFD;document.getElementById("sfd-card").style.display=showSFD?"block":"none";const b=document.getElementById("btog-sfd");b.textContent=`SFD ${showSFD?"✓":"○"}`;b.style.background=showSFD?"#052e16":"transparent";}
+function toggleDEF(){showDEF=!showDEF;document.getElementById("def-card").style.display=showDEF?"block":"none";const b=document.getElementById("btog-def");b.textContent=`DEF ${showDEF?"✓":"○"}`;b.style.background=showDEF?"#1c1008":"transparent";}
+
+function remedyFor(ur,failMsg,warnMsg,okMsg){
+  if(ur>1.0)return{level:"fail",text:failMsg};
+  if(ur>0.75)return{level:"warn",text:warnMsg};
+  return{level:"ok",text:okMsg};
+}
+function suggestSection(propKey,required){
+  if(isBuiltUp)return null;
+  const idx={A:5,Ix:6,Sx:7,Zx:8,rx:9,Iy:10,ry:13}[propKey];
+  const candidates=WSHAPES.filter(r=>r[idx]>=required && (!currentSec || r[0]!==currentSec.name));
+  if(candidates.length===0)return null;
+  candidates.sort((a,b)=>a[idx]-b[idx]);
+  return candidates[0];
+}
+
 function runChecks(){
   const s=currentSec; if(!s)return[];
   const Fy=+document.getElementById("steelGrade").value;
@@ -628,19 +758,71 @@ function runChecks(){
 
   const checks=[
     {name:"Flexural Yielding + LTB",clause:"AISC 360 Ch. F2",demand:`${Mx_total.toFixed(1)} kip-ft`,capacity:`${phiMn.toFixed(1)} kip-ft`,ur:UR_flex,active:Mx_total>0.01,
-     calc:`Mx,total = Mu(loads) + Mx_app = ${Mu.toFixed(1)}+${Mx_app.toFixed(1)} = ${Mx_total.toFixed(1)} k-ft\nSection: ${classification}\nMp=Fy·Zx=${Fy}×${Zx}/12=${Mp.toFixed(1)} k-ft\nLp=${(Lp/12).toFixed(2)} ft, Lr=${(Lr/12).toFixed(2)} ft, Lb=${(Lb/12).toFixed(2)} ft\nMn(LTB)=${Mn_ltb.toFixed(1)} k-ft\nφbMn=0.90×${Mn.toFixed(1)}=${phiMn.toFixed(1)} k-ft\nUR=${UR_flex.toFixed(3)}`},
+     calc:`Mx,total = Mu(loads) + Mx_app = ${Mu.toFixed(1)}+${Mx_app.toFixed(1)} = ${Mx_total.toFixed(1)} k-ft\nSection: ${classification}\nMp=Fy·Zx=${Fy}×${Zx}/12=${Mp.toFixed(1)} k-ft\nLp=${(Lp/12).toFixed(2)} ft, Lr=${(Lr/12).toFixed(2)} ft, Lb=${(Lb/12).toFixed(2)} ft\nMn(LTB)=${Mn_ltb.toFixed(1)} k-ft\nφbMn=0.90×${Mn.toFixed(1)}=${phiMn.toFixed(1)} k-ft\nUR=${UR_flex.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_flex>1.0){
+         const reqZx=(Zx*UR_flex).toFixed(1);
+         const sugg=suggestSection("Zx",+reqZx);
+         const suggTxt=sugg?` Try ${sugg[0]} (Zx=${sugg[8]} in³) — re-check after switching.`:" No lighter W-shape reaches that Zx — consider a deeper section, or reduce Lb by adding lateral bracing (raises Mn via LTB).";
+         return{level:"fail",text:`FAILS in bending — need Zx ≥ ~${reqZx} in³ (currently ${Zx} in³), about ${((UR_flex-1)*100).toFixed(0)}% more capacity needed.${suggTxt}`};
+       }
+       return remedyFor(UR_flex,"","Close to the limit (UR 0.75–1.0) — adequate but little margin.","OK — well within bending capacity.");
+     })()},
     {name:"Shear",clause:"AISC 360 Ch. G2.1",demand:`${Vu.toFixed(1)} kip`,capacity:`${phiVn.toFixed(1)} kip`,ur:UR_shear,active:Vu>0.01,
-     calc:`Aw=d·tw=${toFrac16(s.d)}×${toFrac16(s.tw)}=${Aw.toFixed(2)} in²\nh/tw=${h_tw.toFixed(1)}, Cv1=${Cv1.toFixed(3)}\nVn=0.6FyAwCv1=${Vn.toFixed(1)} kip\nφvVn=${phiVn.toFixed(1)} kip\nUR=${UR_shear.toFixed(3)}`},
+     calc:`Aw=d·tw=${toFrac16(s.d)}×${toFrac16(s.tw)}=${Aw.toFixed(2)} in²\nh/tw=${h_tw.toFixed(1)}, Cv1=${Cv1.toFixed(3)}\nVn=0.6FyAwCv1=${Vn.toFixed(1)} kip\nφvVn=${phiVn.toFixed(1)} kip\nUR=${UR_shear.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_shear>1.0){
+         const sugg=suggestSection("A",s.A*UR_shear);
+         const suggTxt=sugg?` Try ${sugg[0]} (thicker web) — re-check after switching.`:" Consider a deeper/thicker-web section, or add web stiffeners.";
+         return{level:"fail",text:`FAILS in shear — need ~${((UR_shear-1)*100).toFixed(0)}% more shear capacity.${suggTxt}`};
+       }
+       return remedyFor(UR_shear,"","Close to the limit — little reserve capacity.","OK — well within shear capacity.");
+     })()},
     {name:"Deflection",clause:"Serviceability",demand:toFrac16(delta),capacity:`${toFrac16(deflAllow)} (L/${deflRatio})`,ur:UR_defl,active:true,
-     calc:`δ=${toFrac16(delta)}\nAllowable=L/${deflRatio}=${toFrac16(deflAllow)}\nUR=${UR_defl.toFixed(3)}`},
+     calc:`δ=${toFrac16(delta)}\nAllowable=L/${deflRatio}=${toFrac16(deflAllow)}\nUR=${UR_defl.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_defl>1.0){
+         const reqIx=(s.Ix*UR_defl).toFixed(0);
+         const sugg=suggestSection("Ix",+reqIx);
+         const suggTxt=sugg?` Try ${sugg[0]} (Ix=${sugg[6]} in⁴) — that solves this check.`:" No lighter section is stiff enough — go deeper, shorten span, add an intermediate support, or relax the deflection limit if applicable.";
+         return{level:"fail",text:`FAILS deflection — need Ix ≥ ~${reqIx} in⁴ (currently ${s.Ix} in⁴).${suggTxt}`};
+       }
+       return remedyFor(UR_defl,"","Close to the deflection limit — usable but a stiffer section is recommended for comfort.","OK — deflection well within the allowable limit.");
+     })()},
     {name:"Compression",clause:"AISC 360 Ch. E3",demand:`${PuC.toFixed(1)} kip`,capacity:`${phiPn_c.toFixed(1)} kip`,ur:UR_comp,active:PuC>0.1,
-     calc:`KL/r governing=${KLr.toFixed(1)} (${govAxis})\nFe=π²E/(KL/r)²=${Fe.toFixed(1)} ksi\nFcr=${Fcr.toFixed(2)} ksi\nPn=Fcr·Ag=${Pn_c.toFixed(1)} kip\nφcPn=${phiPn_c.toFixed(1)} kip\nUR=${UR_comp.toFixed(3)}`},
+     calc:`KL/r governing=${KLr.toFixed(1)} (${govAxis})\nFe=π²E/(KL/r)²=${Fe.toFixed(1)} ksi\nFcr=${Fcr.toFixed(2)} ksi\nPn=Fcr·Ag=${Pn_c.toFixed(1)} kip\nφcPn=${phiPn_c.toFixed(1)} kip\nUR=${UR_comp.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_comp>1.0){
+         const sugg=suggestSection("A",s.A*UR_comp);
+         const suggTxt=sugg?` As a first estimate, try ${sugg[0]} (A=${sugg[5]} in²) — re-check afterward since Fcr shifts with the new section.`:" Consider a heavier section, or reduce KL by adding bracing along the governing axis (directly raises Fcr).";
+         return{level:"fail",text:`FAILS in compression (buckling) on the ${govAxis} axis — about ${((UR_comp-1)*100).toFixed(0)}% more capacity needed.${suggTxt}`};
+       }
+       return remedyFor(UR_comp,"","Close to the buckling limit — some margin but sensitive to imperfections.","OK — well within compression (buckling) capacity.");
+     })()},
     {name:"Tension (Yielding)",clause:"AISC 360 Ch. D2",demand:`${PuT.toFixed(1)} kip`,capacity:`${phiPn_t.toFixed(1)} kip`,ur:UR_tens,active:PuT>0.1,
-     calc:`Pn=Fy·Ag=${Pn_t.toFixed(1)} kip\nφtPn=${phiPn_t.toFixed(1)} kip\nUR=${UR_tens.toFixed(3)}\n(Rupture-on-net-area not included — verify connections separately)`},
+     calc:`Pn=Fy·Ag=${Pn_t.toFixed(1)} kip\nφtPn=${phiPn_t.toFixed(1)} kip\nUR=${UR_tens.toFixed(3)}\n(Rupture-on-net-area not included — verify connections separately)`,
+     remedy:(()=>{
+       if(UR_tens>1.0){
+         const sugg=suggestSection("A",s.A*UR_tens);
+         const suggTxt=sugg?` Try ${sugg[0]} (A=${sugg[5]} in²) — that solves this check.`:" No lighter section has enough area — go heavier or use a higher steel grade.";
+         return{level:"fail",text:`FAILS in tension — need ~${((UR_tens-1)*100).toFixed(0)}% more area.${suggTxt}`};
+       }
+       return remedyFor(UR_tens,"","Close to the limit — little reserve in tension.","OK — well within tension capacity.");
+     })()},
     {name:"Combined Axial + Biaxial Flexure",clause:"AISC 360 Ch. H1.1/H1.3",demand:`Pr=${Pr.toFixed(1)}k, Mx=${Mx_total.toFixed(1)}, My=${My_total.toFixed(1)}(${My_horiz.toFixed(1)}+${My_app.toFixed(1)})`,capacity:`Pc=${Pc.toFixed(1)}k, Mcx=${phiMn.toFixed(1)}, Mcy=${phiMny.toFixed(1)}`,ur:UR_combined,active:combinedActive,
-     calc:`My,horiz(from HORIZONTAL tab) = ${My_horiz.toFixed(1)} k-ft\nMy,total = ${My_horiz.toFixed(1)}+${My_app.toFixed(1)} = ${My_total.toFixed(1)} k-ft\nPr/Pc=${(Pr/Math.max(Pc,0.001)).toFixed(3)}\n${(Pr/Math.max(Pc,0.001))>=0.2?"Eq H1-1a (Pr/Pc≥0.2)":"Eq H1-1b (Pr/Pc<0.2)"}\nUR=${UR_combined.toFixed(3)}`},
+     calc:`My,horiz(from HORIZONTAL tab) = ${My_horiz.toFixed(1)} k-ft\nMy,total = ${My_horiz.toFixed(1)}+${My_app.toFixed(1)} = ${My_total.toFixed(1)} k-ft\nPr/Pc=${(Pr/Math.max(Pc,0.001)).toFixed(3)}\n${(Pr/Math.max(Pc,0.001))>=0.2?"Eq H1-1a (Pr/Pc≥0.2)":"Eq H1-1b (Pr/Pc<0.2)"}\nUR=${UR_combined.toFixed(3)}`,
+     remedy:remedyFor(UR_combined,
+       "FAILS combined axial+biaxial bending (Ch. H1). Increase section size, reduce the horizontal/lateral force or its lever arm, or reduce the axial load if the load path allows it.",
+       "Close to the limit under combined axial+biaxial bending.",
+       "OK — combined axial+biaxial bending within capacity (or not applicable).")},
     {name:`Slenderness (KL/r) [${govAxis}]`,clause:"AISC 360 User Note",demand:`${KLr.toFixed(1)}`,capacity:`≤ ${slendLimit}`,ur:UR_slend,active:true,
-     calc:`KL/r governing = ${KLr.toFixed(1)}\nLimit for ${memberType} = ${slendLimit}\nUR=${UR_slend.toFixed(3)}`}
+     calc:`KL/r governing = ${KLr.toFixed(1)}\nLimit for ${memberType} = ${slendLimit}\nUR=${UR_slend.toFixed(3)}`,
+     remedy:(()=>{
+       if(UR_slend>1.0){
+         return{level:"fail",text:`FAILS slenderness on the ${govAxis} axis (currently r=${(govAxis.startsWith("y")?s.ry:s.rx).toFixed(2)} in). Try a section with larger r on this axis, or (usually cheaper) reduce KL by adding bracing/restraints.`};
+       }
+       return remedyFor(UR_slend,"","Close to the slenderness limit — consider extra restraint if practical.","OK — well within the slenderness limit.");
+     })()}
   ];
 
   const tbody=document.getElementById("check-tbody");
@@ -660,7 +842,13 @@ function runChecks(){
       <td class="${cls}" style="font-size:10px">${status}</td>`;
     tbody.appendChild(tr);
     const dr=document.createElement("tr");dr.id="cd-"+i;dr.style.display="none";
-    dr.innerHTML=`<td colspan="6" style="background:#0b1120;padding:10px;border-bottom:2px solid ${color}"><pre style="white-space:pre-wrap;font-size:10px;color:#cbd5e1;margin:0">${c.active?c.calc:"Not active for current inputs."}</pre></td>`;
+    const remedyColor=!c.active?"#64748b":c.remedy.level==="fail"?"#ef4444":c.remedy.level==="warn"?"#f59e0b":"#22c55e";
+    dr.innerHTML=`<td colspan="6" style="background:#0b1120;padding:10px;border-bottom:2px solid ${color}">
+      <div style="font-size:9px;color:var(--accent);margin-bottom:4px;letter-spacing:1px">CALCULATION</div>
+      <pre style="white-space:pre-wrap;font-size:10px;color:#cbd5e1;margin:0 0 8px">${c.active?c.calc:"Not active for current inputs."}</pre>
+      <div style="font-size:9px;color:var(--accent);margin-bottom:4px;letter-spacing:1px">SOLUTION / REMARK</div>
+      <div style="font-size:10.5px;color:${remedyColor}">${c.active?c.remedy.text:"—"}</div>
+    </td>`;
     tbody.appendChild(dr);
   });
 
@@ -672,22 +860,72 @@ function runChecks(){
   return checks;
 }
 
+function svgToInlineString(id){
+  const el=document.getElementById(id);
+  if(!el)return "";
+  const clone=el.cloneNode(true);
+  clone.removeAttribute("height");
+  return clone.outerHTML;
+}
 function generatePDFReport(){
   if(!currentSec){alert("Select a W-shape first.");return;}
   const checks=runChecks();
+  const {RA,RB}=calcReactions(), wu=getUDLu();
+  const bmVals=sample(bmFunc), sfVals=sample(sfFunc);
+  const Mu=Math.max(...bmVals.map(Math.abs)), Vu=Math.max(...sfVals.map(Math.abs));
+  const delta=maxDeflection();
   const rows=checks.map(c=>{
     const ur=c.active?c.ur:null;
     const status=ur===null?"N/A":ur<=1.0?"PASS":"FAIL";
-    return `<tr><td>${c.name}</td><td>${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td><td>${ur!==null?ur.toFixed(3):"N/A"}</td><td>${status}</td></tr>`;
+    const cls=ur===null?"":ur>1?"rpt-fail":ur>0.75?"rpt-warn":"rpt-pass";
+    return `<tr><td>${c.name}</td><td>${c.clause}</td><td>${c.demand}</td><td>${c.capacity}</td><td>${ur!==null?ur.toFixed(3):"N/A"}</td><td class="${cls}">${status}</td></tr>`;
   }).join("");
+  const details=checks.map(c=>{
+    const remedyColor=!c.active?"#777":c.remedy.level==="fail"?"#c0392b":c.remedy.level==="warn"?"#b8860b":"#0a7a0a";
+    return `<div style="margin-bottom:10px;border:1px solid #ccc;border-radius:4px;padding:6px 10px">
+      <b>${c.name}</b> <span style="color:#777">(${c.clause})</span>
+      <pre style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:9.5px;margin:4px 0;color:#333">${c.active?(c.calc||"—"):"Not active for current inputs."}</pre>
+      <div style="font-size:10px;color:${remedyColor}"><b>Solution/Remark:</b> ${c.active?c.remedy.text:"—"}</div>
+    </div>`;
+  }).join("");
+  const loadsSummary=[
+    activeLoads.D?`D = ${(+document.getElementById("sl-wD").value).toFixed(2)} kip/ft`:null,
+    activeLoads.L?`L = ${(+document.getElementById("sl-wL").value).toFixed(2)} kip/ft`:null,
+    activeLoads.W?`W = ${(+document.getElementById("sl-wW").value).toFixed(2)} kip/ft`:null,
+    ...pointLoads.map((p,i)=>`P${i+1} = ${p.P} kip @ ${p.x.toFixed(1)} ft from A`)
+  ].filter(Boolean).join(" &nbsp;|&nbsp; ")||"No loads active";
   document.getElementById("print-report").innerHTML=`
-    <h2>AISC 360 — Steel Beam Design Report</h2>
-    <p><b>Section:</b> ${currentSec.name} &nbsp; <b>Grade:</b> Fy=${document.getElementById("steelGrade").value} ksi &nbsp; <b>Span:</b> ${L} ft</p>
+    <h2>AISC 360 — Steel Member Design Report</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:11px;margin-bottom:8px">
+      <div><b>Generated:</b> ${new Date().toLocaleString()}</div>
+      <div><b>Section:</b> ${currentSec.name}</div>
+      <div><b>Support Condition:</b> ${document.getElementById("supCond").options[document.getElementById("supCond").selectedIndex].text}</div>
+      <div><b>Span L:</b> ${L.toFixed(1)} ft</div>
+      <div><b>Steel Grade:</b> Fy=${document.getElementById("steelGrade").value} ksi</div>
+      <div><b>Member Type:</b> ${document.getElementById("memberType").options[document.getElementById("memberType").selectedIndex].text}</div>
+    </div>
+    <h3>Applied Loads</h3>
+    <div style="font-size:11px;margin-bottom:8px">${loadsSummary}</div>
+    <h3>Reactions & Factored Actions</h3>
+    <table border="1" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11px;margin-bottom:10px">
+      <tr style="background:#eee"><th>RA</th><th>RB</th><th>w* (factored)</th><th>Mu (max)</th><th>Vu (max)</th><th>δ (service)</th></tr>
+      <tr><td>${RA.toFixed(2)} kip</td><td>${RB.toFixed(2)} kip</td><td>${wu.toFixed(2)} kip/ft</td><td>${Mu.toFixed(2)} kip-ft</td><td>${Vu.toFixed(2)} kip</td><td>${toFrac16(delta)}</td></tr>
+    </table>
+    <h3>Beam & Diagrams</h3>
+    ${svgToInlineString("svg-beam")}
+    ${svgToInlineString("svg-bmd")}
+    ${svgToInlineString("svg-sfd")}
+    ${svgToInlineString("svg-def")}
+    <h3>AISC 360 Design Checks — Summary</h3>
     <table border="1" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11px">
       <tr style="background:#eee"><th>Check</th><th>Clause</th><th>Demand</th><th>Capacity</th><th>UR</th><th>Status</th></tr>
       ${rows}
     </table>
-    <p style="margin-top:16px;font-size:10px;color:#777">BETA tool — independently verify against AISC 360 before construction use.</p>
+    <h3>Full Calculation & Solution for Every Check</h3>
+    ${details}
+    <div style="margin-top:16px;font-size:9px;color:#777;border-top:1px solid #ccc;padding-top:6px">
+      BETA tool — for preliminary design only. Independently verify against AISC 360 and the current Steel Construction Manual before use in any real project.
+    </div>
   `;
   window.print();
 }
@@ -764,12 +1002,26 @@ function updateAll(){
   pointLoadsH=pointLoadsH.map(ld=>({...ld,x:Math.min(ld.x,L-0.5)}));
   renderPLControls();
   renderPLHControls();
-  drawBeam();drawBMD();drawSFD();drawDEF();
+  ["wD","wL","wW"].forEach(id=>{
+    const key=id.replace("w","");
+    if(activeLoads[key]){
+      const sl=document.getElementById("sl-"+id),num=document.getElementById("num-"+id);
+      let v=+num.value; if(isNaN(v))v=+sl.value; if(v<0)v=0;
+      if(+sl.value!==v)extendRange("sl-"+id,v);
+      if(+num.value!==v)num.value=v;
+      document.getElementById("val-"+id).textContent=v.toFixed(2)+" kip/ft";
+    }
+  });
+  drawBeam();
+  if(showBMD)drawBMD();
+  if(showSFD)drawSFD();
+  if(showDEF)drawDEF();
   if(currentSec)runChecks();
 }
 
 populateDesig();
-onSectionChange();
+onFamilyChange();
+toggleLoad("L");
 renderPLControls();
 renderPLHControls();
 updateAll();
