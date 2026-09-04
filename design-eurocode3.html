@@ -506,7 +506,7 @@ function defFunc(x){
   const ws=getUDLs(),E=210000,EI=E*currentSec.Iy; // N/mm2 * mm4 = N.mm2
   const Lmm=L*1000,xmm=x*1000,sc=getSupCond();
   let delta=0;
-  const wsi=ws/1000; // N/mm (kN/m -> N/mm: 1kN/m = 1 N/mm)
+  const wsi=ws; // N/mm (1 kN/m = 1000N/1000mm = 1 N/mm exactly — no conversion factor needed)
   if(wsi>0){
     if(sc==="SS"||sc==="OVERHANG") delta+=wsi*xmm*(Lmm**3-2*Lmm*xmm*xmm+xmm**3)/(24*EI);
     else if(sc==="CANT") delta+=wsi*(6*Lmm*Lmm*xmm*xmm-4*Lmm*xmm**3+xmm**4)/(24*EI);
