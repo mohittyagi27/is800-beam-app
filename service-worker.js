@@ -1,4 +1,4 @@
-const CACHE_NAME = "is800-beam-checker-v27";
+const CACHE_NAME = "is800-beam-checker-v28";
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,6 +16,7 @@ const ASSETS = [
   "./design-aisc360.html",
   "./design-eurocode3.html",
   "./design-as4100.html",
+  "./design-csas16.html",
   "./firebase-config.js",
   "./auth-guard.js",
   "./translations.js",
